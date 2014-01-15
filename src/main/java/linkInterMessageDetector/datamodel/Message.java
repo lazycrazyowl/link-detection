@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package linkInterMessageDetector.datamodel;
 
@@ -10,6 +10,6 @@ import java.util.Set;
  *
  */
 public class Message {
-	Set<LexicalChain> messageDescription;
 
+    Set<LexicalChain> messageDescription;
 }
