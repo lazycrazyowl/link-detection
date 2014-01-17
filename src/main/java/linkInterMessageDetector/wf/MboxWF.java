@@ -1,40 +1,86 @@
-/**
- *
- */
 package linkInterMessageDetector.wf;
 
+import linkInterMessageDetector.ae.LexicalChainsAE;
+import linkInterMessageDetector.ae.LinkAE;
+import linkInterMessageDetector.ae.LinkConsumerAE;
 import linkInterMessageDetector.ae.MBoxMessageParserAE;
+import linkInterMessageDetector.ae.WordSegmenterAE;
 import linkInterMessageDetector.cr.MboxReaderCR;
+import linkInterMessageDetector.res.CollocationNetworkModel_Impl;
+import linkInterMessageDetector.res.LexicalChainsModel_Impl;
+import linkInterMessageDetector.res.StopWordModel_Impl;
+import linkInterMessageDetector.res.ThreadModel_Impl;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
+import org.apache.uima.cas.CAS;
 import org.apache.uima.collection.CollectionReaderDescription;
+import org.apache.uima.fit.factory.AggregateBuilder;
 import static org.apache.uima.fit.factory.AnalysisEngineFactory.createEngineDescription;
 import static org.apache.uima.fit.factory.CollectionReaderFactory.createReaderDescription;
+import static org.apache.uima.fit.factory.ExternalResourceFactory.createExternalResourceDescription;
 import org.apache.uima.fit.pipeline.SimplePipeline;
+import org.apache.uima.resource.ExternalResourceDescription;
 
-/**
- * Illustrate how to configure and run annotators with the shared model object.
- */
 public class MboxWF {
 
     public static void main(String[] args) throws Exception {
 
+        ExternalResourceDescription stopWordsResourceDesc =
+                createExternalResourceDescription(
+                StopWordModel_Impl.class,
+                "file:resourceManagement/data/stopwords-fr.txt");
 
+        ExternalResourceDescription threadResourceDesc =
+                createExternalResourceDescription(
+                ThreadModel_Impl.class,
+                "file:data/thread-messageId.digest");
 
+        ExternalResourceDescription chainsResourceDesc =
+                createExternalResourceDescription(
+                LexicalChainsModel_Impl.class,
+                "");
+        ExternalResourceDescription collocationNetworkResourceDesc =
+                createExternalResourceDescription(
+                CollocationNetworkModel_Impl.class,
+                "file:output/cn.csv");
 
-        AnalysisEngineDescription aed4 = createEngineDescription(
-                MBoxMessageParserAE.class,
-                MBoxMessageParserAE.PARAM_DEST_DIR,
-                "email.message");
+        AnalysisEngineDescription parserAe = createEngineDescription(
+                MBoxMessageParserAE.class);
 
+        AnalysisEngineDescription segmenterAe = createEngineDescription(
+                WordSegmenterAE.class,
+                WordSegmenterAE.RES_KEY, stopWordsResourceDesc);
 
-        CollectionReaderDescription crd = createReaderDescription(MboxReaderCR.class,
-                MboxReaderCR.PARAM_MBOX_SRCPATH, "data/ubuntu-fr.mbox",
-                //MboxReaderCR.PARAM_MBOX_SRCPATH, "/tmp/athread", 
+        AnalysisEngineDescription chainsAe = createEngineDescription(
+                LexicalChainsAE.class,
+                LexicalChainsAE.RES_CN_KEY, collocationNetworkResourceDesc,
+                LexicalChainsAE.RES_CHAINS_KEY, chainsResourceDesc,
+                LexicalChainsAE.PARAM_GAP_SIZE, 15,
+                LexicalChainsAE.PARAM_SCORE_THRESHOLD, 1,
+                LexicalChainsAE.PARAM_MINIMUM_LENGTH, 2);
+
+        AnalysisEngineDescription linkAe = createEngineDescription(
+                LinkAE.class,
+                LinkAE.RES_THREADS_KEY, threadResourceDesc,
+                LinkAE.RES_CHAINS_KEY, chainsResourceDesc);
+
+        AnalysisEngineDescription linkConsumerAe = createEngineDescription(
+                LinkConsumerAE.class,
+                LinkConsumerAE.PARAM_DEST_FILENAME, "output/result.txt");
+
+        CollectionReaderDescription crd = createReaderDescription(
+                MboxReaderCR.class,
+                MboxReaderCR.PARAM_MBOX_SRCPATH, "data/ubuntu-fr-utf8.mbox",
                 MboxReaderCR.PARAM_LANGUAGE, "fr",
-                MboxReaderCR.PARAM_ENCODING, "iso-8859-1");
+                MboxReaderCR.PARAM_ENCODING, "utf-8");
 
-
-        // Run the pipeline
-        SimplePipeline.runPipeline(crd, aed4); //aaed
+        AggregateBuilder builder = new AggregateBuilder();
+        builder.add(parserAe);
+        builder.add(segmenterAe, CAS.NAME_DEFAULT_SOFA, "parsed");
+        builder.add(chainsAe, CAS.NAME_DEFAULT_SOFA, "parsed");
+        builder.add(linkAe, CAS.NAME_DEFAULT_SOFA, "parsed");
+        builder.add(linkConsumerAe, CAS.NAME_DEFAULT_SOFA, "parsed");
+        SimplePipeline.runPipeline(
+                crd,
+                builder.createAggregateDescription());
     }
 }
