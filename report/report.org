@@ -1,0 +1,37 @@
+* Utilisation du logiciel
+  Afin de rendre le développement du logiciel plus aisé sous Netbeans
+  et autres IDEs différents d'Eclipse, le projet Eclipse a été
+  transformé en projet Maven. Le résultat de cette transformation a
+  été mis à disposition du reste du groupe sur [[https://github.com/m09/teach-uima-project/releases/tag/v1.0][github]].
+
+  Un build maven a été créé pour compléter l'ébauche proposée dans le
+  projet initial. Packager le logiciel en une jar nécessite donc un
+  simple appel maven :
+
+  #+BEGIN_SRC shell
+  cd path/to/project/folder
+  mvn package
+  #+END_SRC
+  
+  Pour lancer le workflow de construction du réseau de collocation,
+  il faut ensuite appeler java de la manière suivante :
+  
+  #+BEGIN_SRC shell
+  cd path/to/project/folder
+  java -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      linkInterMessageDetector.wf.CollocationNetworkBuilderWF
+  #+END_SRC
+
+  Pour lancer le workflow de threading, il faut modifier la classe
+  principale comme suit par rapport à l'appel précédent :
+
+  #+BEGIN_SRC shell
+  cd path/to/project/folder
+  java -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      linkInterMessageDetector.wf.MboxWF
+  #+END_SRC
+  
+  Note : aucune récupération d'arguments n'a été implémentée pour
+  configurer les workflows. Il faut donc modifier directement les
+  paramètres des AEs dans les classes des workflows voulus pour
+  lancer une exécution avec des paramètres particuliers.
