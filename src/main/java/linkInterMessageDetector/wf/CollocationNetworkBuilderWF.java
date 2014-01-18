@@ -1,6 +1,3 @@
-/**
- *
- */
 package linkInterMessageDetector.wf;
 
 import linkInterMessageDetector.ae.CollocationNetworkBuilderAE;
@@ -29,12 +26,12 @@ public class CollocationNetworkBuilderWF {
                 CollocationNetworkModel_Impl.class,
                 "");
 
-        AnalysisEngineDescription aed0 = createEngineDescription(
+        AnalysisEngineDescription segmenterAe = createEngineDescription(
                 WordSegmenterAE.class,
                 WordSegmenterAE.RES_KEY,
                 stopWordsResourceDesc);
 
-        AnalysisEngineDescription aed3 = createEngineDescription(
+        AnalysisEngineDescription cnAe = createEngineDescription(
                 CollocationNetworkBuilderAE.class,
                 CollocationNetworkBuilderAE.RES_KEY,
                 collocationNetworkResourceDesc,
@@ -43,12 +40,10 @@ public class CollocationNetworkBuilderWF {
                 CollocationNetworkBuilderAE.PARAM_WINDOW_SIZE,
                 3);
 
-        AnalysisEngineDescription aaed = createEngineDescription(aed0, aed3);
-
         CollectionReaderDescription crd = createReaderDescription(ZimReaderCR.class,
                 ZimReaderCR.PARAM_ZIM_SRCPATH, "data/ubuntudoc_fr_01_2009.zim",
                 ZimReaderCR.PARAM_LANGUAGE, "fr",
                 ZimReaderCR.PARAM_ENCODING, "utf-8");
-        SimplePipeline.runPipeline(crd, aaed);
+        SimplePipeline.runPipeline(crd, segmenterAe, cnAe);
     }
 }

@@ -8,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.PrintWriter;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -25,12 +26,12 @@ import org.apache.uima.resource.SharedResourceObject;
  */
 public final class CollocationNetworkModel_Impl
         implements CollocationNetworkModel, SharedResourceObject {
-
+    
     private final Map<String, Map<String, Double>> collocationNetworkMap =
             new HashMap<>();
     private final static double initialValue = 0.;
     private final static int incrementValue = 1;
-
+    
     @Override
     public void load(DataResource aData)
             throws ResourceInitializationException {
@@ -70,7 +71,7 @@ public final class CollocationNetworkModel_Impl
                     .log(Level.SEVERE, null, ex);
         }
     }
-
+    
     @Override
     public Double get(String word, String collocation) {
         if (collocationNetworkMap.containsKey(word)) {
@@ -81,7 +82,7 @@ public final class CollocationNetworkModel_Impl
         }
         return initialValue;
     }
-
+    
     @Override
     public synchronized void inc(String key, String collocation) {
         if (!collocationNetworkMap.containsKey(key)) {
@@ -105,7 +106,7 @@ public final class CollocationNetworkModel_Impl
             wordMap.put(key, wordMap.get(key) + incrementValue);
         }
     }
-
+    
     @Override
     public synchronized void inc(
             String key,
@@ -132,7 +133,7 @@ public final class CollocationNetworkModel_Impl
             wordMap.put(key, wordMap.get(key) + howMuch);
         }
     }
-
+    
     @Override
     public synchronized void dec(String key, String collocation) {
         if (!collocationNetworkMap.containsKey(key)) {
@@ -162,12 +163,12 @@ public final class CollocationNetworkModel_Impl
                     wordMap.get(collocation) - incrementValue));
         }
     }
-
+    
     @Override
     public Integer size() {
         return collocationNetworkMap.size();
     }
-
+    
     @Override
     public Integer size(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -175,12 +176,12 @@ public final class CollocationNetworkModel_Impl
         }
         return collocationNetworkMap.get(word).size();
     }
-
+    
     @Override
     public Set<String> keySet() {
         return Collections.unmodifiableSet(collocationNetworkMap.keySet());
     }
-
+    
     @Override
     public Set<String> keySet(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -188,7 +189,7 @@ public final class CollocationNetworkModel_Impl
         }
         return Collections.unmodifiableSet(collocationNetworkMap.get(word).keySet());
     }
-
+    
     @Override
     public Double getTotalCounter() {
         double total = 0;
@@ -199,7 +200,7 @@ public final class CollocationNetworkModel_Impl
         }
         return total;
     }
-
+    
     @Override
     public Double getTotalCounter(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -211,7 +212,7 @@ public final class CollocationNetworkModel_Impl
         }
         return total;
     }
-
+    
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -230,14 +231,29 @@ public final class CollocationNetworkModel_Impl
         }
         return sb.toString();
     }
-
+    
     @Override
     public void echo() {
         System.out.println(this);
     }
-
+    
     @Override
     public void save(String filename) {
-        MiscUtil.writeToFS(this.toString(), filename);
+        try (PrintWriter pw = new PrintWriter(filename)) {
+            for (String word : collocationNetworkMap.keySet()) {
+                for (String collocation : collocationNetworkMap
+                        .get(word)
+                        .keySet()) {
+                    pw.println(
+                            word
+                            + '\t'
+                            + collocation
+                            + '\t'
+                            + collocationNetworkMap.get(word).get(collocation));
+                }
+            }
+        } catch (IOException e) {
+            MiscUtil.abort("Couldn't open output file “" + filename + "”.", e);
+        }
     }
 }

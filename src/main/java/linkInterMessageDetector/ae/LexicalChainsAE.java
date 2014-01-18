@@ -21,7 +21,8 @@ public class LexicalChainsAE extends JCasAnnotator_ImplBase {
             RES_CHAINS_KEY = "LexicalChainsKey2",
             PARAM_GAP_SIZE = "LexicalChainsKey3",
             PARAM_SCORE_THRESHOLD = "LexicalChainsKey4",
-            PARAM_MINIMUM_LENGTH = "LexicalChainsKey5";
+            PARAM_MINIMUM_LENGTH = "LexicalChainsKey5",
+            PARAM_RESOURCE_DEST_FILENAME = "lexicalChainsKey6";
     @ExternalResource(key = RES_CN_KEY)
     private CollocationNetworkModel collocationNetwork;
     @ExternalResource(key = RES_CHAINS_KEY)
@@ -38,6 +39,10 @@ public class LexicalChainsAE extends JCasAnnotator_ImplBase {
     mandatory = true,
     description = "Minimum collocation score to consider two words related")
     private int minimumLength;
+    @ConfigurationParameter(name = PARAM_RESOURCE_DEST_FILENAME,
+    mandatory = false,
+    description = "Where to save the lexical chains. Not present = not saved")
+    private String outFilename;
     static int counter = 1;
 
     @Override
@@ -91,5 +96,13 @@ public class LexicalChainsAE extends JCasAnnotator_ImplBase {
         String id = JCasUtil.selectSingle(aJCas, Id.class).getUid();
         System.out.println("\r" + id + ": " + counter++ + ": " + result.size());
         lexicalChains.setChains(id, result);
+    }
+
+    @Override
+    public void collectionProcessComplete()
+            throws AnalysisEngineProcessException {
+        if (outFilename != null) {
+            lexicalChains.save(outFilename);
+        }
     }
 }

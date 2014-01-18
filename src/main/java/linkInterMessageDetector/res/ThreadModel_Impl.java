@@ -1,5 +1,6 @@
 package linkInterMessageDetector.res;
 
+import common.util.MiscUtil;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
@@ -34,15 +35,12 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
         try {
             is = aData.getInputStream();
         } catch (NullPointerException ex) {
-            System.err.println("Please provide a thread digest file as "
-                    + "parameter to this resource. If you provided one it "
-                    + "wasn't correct. Aborting.");
-            System.exit(1);
+            MiscUtil.abort(
+                    "Please provide a thread digest file as parameter to this "
+                    + "resource. If you provided one it wasn't correct.",
+                    null);
         } catch (IOException ex) {
-            System.err.println("Couldn't open the thread digest file.");
-            System.err.println("Aborting.");
-            System.err.println("Exception was: " + ex.getLocalizedMessage());
-            System.err.println("Trace was: " + ex.getStackTrace());
+            MiscUtil.abort("Couldn't open the thread digest file.", ex);
         }
         try (BufferedReader br = new BufferedReader(
                         new InputStreamReader(is))) {
@@ -66,10 +64,7 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
                 }
             }
         } catch (IOException ex) {
-            System.err.println("Couldn't open the thread digest file.");
-            System.err.println("Aborting.");
-            System.err.println("Exception was: " + ex.getLocalizedMessage());
-            System.err.println("Trace was: " + ex.getStackTrace());
+            MiscUtil.abort("Couldn't open the thread digest file.", ex);
         }
     }
 }

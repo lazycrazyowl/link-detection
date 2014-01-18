@@ -1,14 +1,10 @@
 package linkInterMessageDetector.wf;
 
-import linkInterMessageDetector.ae.LexicalChainsAE;
 import linkInterMessageDetector.ae.LinkAE;
 import linkInterMessageDetector.ae.LinkConsumerAE;
 import linkInterMessageDetector.ae.MBoxMessageParserAE;
-import linkInterMessageDetector.ae.WordSegmenterAE;
 import linkInterMessageDetector.cr.MboxReaderCR;
-import linkInterMessageDetector.res.CollocationNetworkModel_Impl;
 import linkInterMessageDetector.res.LexicalChainsModel_Impl;
-import linkInterMessageDetector.res.StopWordModel_Impl;
 import linkInterMessageDetector.res.ThreadModel_Impl;
 import org.apache.uima.analysis_engine.AnalysisEngineDescription;
 import org.apache.uima.cas.CAS;
@@ -20,14 +16,9 @@ import static org.apache.uima.fit.factory.ExternalResourceFactory.createExternal
 import org.apache.uima.fit.pipeline.SimplePipeline;
 import org.apache.uima.resource.ExternalResourceDescription;
 
-public class MboxWF {
+public class LinksDetectionWF {
 
     public static void main(String[] args) throws Exception {
-
-        ExternalResourceDescription stopWordsResourceDesc =
-                createExternalResourceDescription(
-                StopWordModel_Impl.class,
-                "file:resourceManagement/data/stopwords-fr.txt");
 
         ExternalResourceDescription threadResourceDesc =
                 createExternalResourceDescription(
@@ -37,26 +28,10 @@ public class MboxWF {
         ExternalResourceDescription chainsResourceDesc =
                 createExternalResourceDescription(
                 LexicalChainsModel_Impl.class,
-                "");
-        ExternalResourceDescription collocationNetworkResourceDesc =
-                createExternalResourceDescription(
-                CollocationNetworkModel_Impl.class,
-                "file:output/cn.csv");
+                "file:output/lc.txt");
 
         AnalysisEngineDescription parserAe = createEngineDescription(
                 MBoxMessageParserAE.class);
-
-        AnalysisEngineDescription segmenterAe = createEngineDescription(
-                WordSegmenterAE.class,
-                WordSegmenterAE.RES_KEY, stopWordsResourceDesc);
-
-        AnalysisEngineDescription chainsAe = createEngineDescription(
-                LexicalChainsAE.class,
-                LexicalChainsAE.RES_CN_KEY, collocationNetworkResourceDesc,
-                LexicalChainsAE.RES_CHAINS_KEY, chainsResourceDesc,
-                LexicalChainsAE.PARAM_GAP_SIZE, 15,
-                LexicalChainsAE.PARAM_SCORE_THRESHOLD, 1,
-                LexicalChainsAE.PARAM_MINIMUM_LENGTH, 2);
 
         AnalysisEngineDescription linkAe = createEngineDescription(
                 LinkAE.class,
@@ -75,8 +50,6 @@ public class MboxWF {
 
         AggregateBuilder builder = new AggregateBuilder();
         builder.add(parserAe);
-        builder.add(segmenterAe, CAS.NAME_DEFAULT_SOFA, "parsed");
-        builder.add(chainsAe, CAS.NAME_DEFAULT_SOFA, "parsed");
         builder.add(linkAe, CAS.NAME_DEFAULT_SOFA, "parsed");
         builder.add(linkConsumerAe, CAS.NAME_DEFAULT_SOFA, "parsed");
         SimplePipeline.runPipeline(
