@@ -1,12 +1,130 @@
+* Design général
+** Construction du réseau de collocations
+   Le workflow proposé consiste en l'utilisation d'un Collection
+   Reader et deux deux AEs pour remplir une ressource représentant le
+   réseau de collocations visé. Il est fidèle au diagramme fourni :
+
+   #+ATTR_HTML: width="800px"
+   [[./img/cn.png]]
+
+   Pour construire le réseau de collocations nécessaire à la détection
+   de liens, un nouvel AE a été proposé par rapport au projet rendu
+   début décembre. Celui-ci prend en paramètre la taille de la fenêtre
+   à considérer pour détecter des collocations et a toutes les
+   fonctionnalités précédentes. Il exporte le réseau obtenu une fois
+   le batch terminé (dans la méthode =collectionProcessComplete=).
+
+   Contrairement à l'approche théorique proposée plus loin, le CR n'a
+   pas été modifié : il est toujours en charge dans de parser le HTML
+   dans l'implémention proposée.
+** Détection de lien entre les messages d'un même thread
+   Un des problèmes majeurs pour détecter les liens entre différents
+   messages est de garder disponble l'information de tous les messages
+   d'un thread durant le processing de chacun de ses messages. Pour
+   résoudre ce problème, une approche basée sur les ressources a été
+   implémentée : les informations sur les messages sont conservées
+   dans une ressource partagée qui permet durant le =process= d'un
+   message en particulier d'avoir à disposition toutes les
+   informations nécessaires. On pourrait modéliser cette approche avec
+   le diagramme qui suit (qui se lit avec des axes inversés par
+   rapport au diagramme précédent car un diagramme long verticalement
+   était moins gênant qu'un diagramme long horizontalement) :
+
+   #+ATTR_HTML: width="800px"
+   [[./img/ld.png]]
+
+   L'idée est donc de fonctionner principalement autour de
+   ressources. Outre les mots outils qui aident à tokenizer le texte,
+   la ressource du réseau de collocations est utilisée pour produire
+   la ressource des chaînes lexicales, et cette dernière est utilisée
+   en conjonction avec les informations sur les threads pour créer le
+   résultat attendu.
+
+   Une autre solution que celle retenue (la ressource partagée) pour
+   avoir accès aux informations de tous les messages d'un thread
+   pendant le =process= de chacun d'entre eux aurait été de créer un
+   type Thread et de merger les CAS des messages en un CAS de
+   Thread. Cette option n'a pas été retenue car les CAS Multiplier de
+   UIMA ne facilitent pas ce genre d'opérations à l'heure actuelle et
+   la méthode par ressource était plus facile à mettre en place. Il
+   est cependant possible que merger les CAS soit plus efficace, en
+   particulier en espace mémoire requis.
+* Design des ressources
+** Ressource du réseau de collocations
+   Cette ressource n'est pas détaillée car elle n'a pas évolué depuis
+   le TP rendu début décembre.
+** Ressoure des chaînes lexicales
+   Cette ressource permet de garder un mapping des messageId vers les
+   chaînes lexicales correspondantes. C'est donc un simple wrapper
+   autour d'une Map, à la manière de la ressource WordCounter vue en
+   cours.
+** Ressource d'info des threads
+   Cette ressource expose les informations contenues dans le fichier
+   thread digest par deux méthodes :
+
+   - la première permet de récupérer l'identifiant d'un thread étant
+     donné l'identifiant d'un message (l'identifiant d'un thread est
+     l'identifiant de son premier message)
+
+   - la seconde permet de récupérer les identifiants des messages d'un
+     thread étant donné l'identifiant de ce thread.
+
+   L'implémentation proposée utilise deux Map, l'une avec pour clefs
+   les identifiants de messages, l'autre avec pour clefs les
+   identifiants de threads.
+* Design des composants
+** AE de création du réseau de collocations
+   Cet AE a été réimplémenté depuis le TP rendu début décembre. Il est
+   maintenant conçu pour que la taille de la fenêtre soit paramètrable
+   et le parcours de cette fenêtre se fait avec queue pour une
+   efficacité optimale.
+** AE de segmentation
+   Une modification a été apportée pour ne garder que les mots de deux
+   lettres ou plus constitués seulement de lettres (=p{L}{2,}=), pour
+   limiter le bruit.
+** AE de création des chaînes lexicales
+   Cet AE a été implémenté pour que les expérimentations sur les
+   chaînes lexicales soient faciles par la suite. Il est donc possible
+   de paramétrer, en plus des deux ressources nécessaires (le réseau
+   de collocation et la ressource “output” des chaînes lexicales :
+
+   - le fossé maximal entre deux mots considérés en relation de
+     collocation ;
+
+   - le score de collocation à partir duquel on considère que deux
+     mots sont en relation de collocation ;
+
+   - la longueur minimale des chaînes lexicales retenues.
+
+   La création des chaînes lexicales se fait en ne visitant chaque
+   mot du message qu'une fois et en l'intègrant ou non aux chaînes
+   lexicales existantes. Les chaînes lexicales ne sont pas mergées.
+
+   /i.e./, si on a les chaînes lexicales ={soleil, pluie}= et ={commerce}=
+   au pas 2 et qu'on rencontre =vente= au pas 3, qui pourrait
+   s'intégrer aux deux chaînes, on ne les regroupe pas. D'une part
+   pour une question de performance et d'autre part parce que le merge
+   n'est pas toujours justifié, comme on le voit avec cet exemple.
+
+   Une fois ces chaînes créées, elles sont ajoutées à la ressource
+   =LexicalChainModel= qui permet de retrouver les chaînes lexicales
+   d'un message depuis son messageId.
+** AE de détection de liens entre messages
+   Cet AE utilise une ressource qui rend disponible le thread digest,
+   en plus de la ressource contenant les chaînes lexicales. Il se
+   contente ensuite, quand un message arrive dans la méthode
+   =process=, de récupérer tous les messages du thread déjà passés par
+   =process= et de comparer le message courant avec chacun de ces
+   messages. Le message dont la comparaison donne le plus grand score
+   est considéré comme parent du message actuel.
 * Utilisation du logiciel
   Afin de rendre le développement du logiciel plus aisé sous Netbeans
   et autres IDEs différents d'Eclipse, le projet Eclipse a été
   transformé en projet Maven. Le résultat de cette transformation a
   été mis à disposition du reste du groupe sur [[https://github.com/m09/teach-uima-project/releases/tag/v1.0][github]].
 
-  Un build maven a été créé pour compléter l'ébauche proposée dans le
-  projet initial. Packager le logiciel en une jar nécessite donc un
-  simple appel maven :
+  En conséquence, packager le logiciel en une jar est un simple appel
+  maven :
 
   #+BEGIN_SRC shell
   cd path/to/project/folder
@@ -17,21 +135,27 @@
   il faut ensuite appeler java de la manière suivante :
   
   #+BEGIN_SRC shell
-  cd path/to/project/folder
   java -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
       linkInterMessageDetector.wf.CollocationNetworkBuilderWF
   #+END_SRC
 
-  Pour lancer le workflow de threading, il faut modifier la classe
+  Pour lancer le workflow de threading, il faut augmenter la limite de
+  mémoire (1024m sont suffisants chez moi mais ralentissent la fin de
+  l'exécution−le nettoyage du tas prenant visiblement beaucoup de
+  temps−2048m comme présenté ci-dessous sont donc plus confortables si
+  la machine de test le permet). Il faut aussi changer la classe
   principale comme suit par rapport à l'appel précédent :
 
   #+BEGIN_SRC shell
-  cd path/to/project/folder
-  java -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+  java -Xmx2048m \
+      -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
       linkInterMessageDetector.wf.MboxWF
   #+END_SRC
   
   Note : aucune récupération d'arguments n'a été implémentée pour
   configurer les workflows. Il faut donc modifier directement les
-  paramètres des AEs dans les classes des workflows voulus pour
-  lancer une exécution avec des paramètres particuliers.
+  paramètres des AEs dans les classes des workflows voulus pour lancer
+  une exécution avec des paramètres particuliers. En particulier, il
+  convient de bien renseigner les chemins des ressources et outputs
+  afin que le logiciel fonctionne correctement. Il faut repackager le
+  logiciel pour que les changements prennent effet.
