@@ -1,4 +1,30 @@
-* Design général
+#+TITLE:     Rapport sur le projet de détection de liens entre messages par chaînes lexicales
+#+AUTHOR:    Hugo Mougard
+#+EMAIL:     hugo.mougard@etu.univ-nantes.fr
+#+DATE:      dimanche 19 janvier 2014
+#+DESCRIPTION:
+#+KEYWORDS:
+#+LANGUAGE:  fr
+#+OPTIONS:   H:3 num:t toc:t \n:nil @:t ::t |:t ^:t -:t f:t *:t <:t
+#+OPTIONS:   TeX:t LaTeX:t skip:nil d:nil todo:t pri:nil tags:not-in-toc
+#+INFOJS_OPT: view:nil toc:nil ltoc:t mouse:underline buttons:0 path:http://orgmode.org/org-info.js
+#+EXPORT_SELECT_TAGS: export
+#+EXPORT_EXCLUDE_TAGS: noexport
+#+LINK_UP:   
+#+LINK_HOME: 
+#+XSLT:
+
+* Design proposé
+** Notes préliminaires
+   La tâche a été découpée en trois sous-tâches distinctes :
+
+   - construire un réseau de collocations ;
+   - construire les chaînes lexicales correspondant aux messages à
+     lier ;
+   - lier les messages.
+
+   Chaque sous-tâche fait l'objet d'un workflow à part entière. Ils
+   sont détaillés tour à tour ci-dessous.
 ** Construction du réseau de collocations
    Le workflow proposé consiste en l'utilisation d'un Collection
    Reader et deux deux AEs pour remplir une ressource représentant le
@@ -7,38 +33,69 @@
    #+ATTR_HTML: width="800px"
    [[./img/cn.png]]
 
-   Pour construire le réseau de collocations nécessaire à la détection
-   de liens, un nouvel AE a été proposé par rapport au projet rendu
-   début décembre. Celui-ci prend en paramètre la taille de la fenêtre
-   à considérer pour détecter des collocations et a toutes les
-   fonctionnalités précédentes. Il exporte le réseau obtenu une fois
-   le batch terminé (dans la méthode =collectionProcessComplete=).
-
    Contrairement à l'approche théorique proposée plus loin, le CR n'a
-   pas été modifié : il est toujours en charge dans de parser le HTML
-   dans l'implémention proposée.
-** Détection de lien entre les messages d'un même thread
+   pas été modifié : il est toujours en charge de parser le HTML dans
+   l'implémention proposée.
+** Construction des chaînes lexicales
    Un des problèmes majeurs pour détecter les liens entre différents
-   messages est de garder disponble l'information de tous les messages
-   d'un thread durant le processing de chacun de ses messages. Pour
-   résoudre ce problème, une approche basée sur les ressources a été
-   implémentée : les informations sur les messages sont conservées
-   dans une ressource partagée qui permet durant le =process= d'un
-   message en particulier d'avoir à disposition toutes les
-   informations nécessaires. On pourrait modéliser cette approche avec
-   le diagramme qui suit (qui se lit avec des axes inversés par
-   rapport au diagramme précédent car un diagramme long verticalement
-   était moins gênant qu'un diagramme long horizontalement) :
+   messages est de garder disponible l'information de tous les
+   messages d'un thread durant le processing de chacun de ses
+   messages. Pour résoudre ce problème, une approche basée sur les
+   ressources a été implémentée : les informations sur les messages
+   sont conservées dans une ressource partagée qui permet durant le
+   =process= d'un message en particulier d'avoir à disposition toutes
+   les informations nécessaires (ici les chaînes lexicales de ce
+   message et de tous les messages du thread dont il fait partie).
+
+   De plus, on peut avoir besoin d'informations qui ne seront
+   disponibles qu'à un point ultérieur dans le traitement du corpus si
+   l'on se base sur une architecture en pipeline de création des
+   chaînes puis de liaison des messages. On voudrait avoir la
+   possibilité de relier un message à tous les messages d'un thread,
+   pas seulement ceux vus jusqu'au traitement du message à relier. Or
+   au stade courant du traitement d'un message tous les messages de
+   son threads qui ne sont pas encore apparus n'ont pas de chaînes
+   lexicales produites et ne peuvent pas être reliés au message
+   courant.
+
+   On peut souhaiter cette capacité de relier un message à des
+   messages ultérieurs par exemple pour voir si la méthode proposée
+   est robuste aux mbox non ordonnées (ce qui n'est pas le cas pour le
+   corpus considéré: la mbox est ordonnée).
+
+   Ainsi, pour proposer une approche générale satisfaisant les
+   contraintes mentionnées ci-dessus, la création de la ressource des
+   chaînes lexicales fait l'objet d'un workflow à part entière. Cette
+   décision de design entraîne deux répétitions : la première est la
+   lecture du corpus de messages qui sera effectuée deux fois au lieu
+   d'une, la seconde est le parsing des messages qui là encore sera
+   effectué deux fois au lieu d'une. Ces inconvénients sont toutefois
+   mineurs : ces deux étapes ne sont pas celles qui prennent le plus
+   de temps dans cette chaîne de traitements.
+
+   Le diagramme présenté ci-dessous détaille l'approche proposée pour
+   créer la ressource de chaînes lexicales (il se lit de haut en bas
+   et non de gauche à droite comme le diagramme proposé pour le réseau
+   de collocations) :
+
+   #+ATTR_HTML: width="800px"
+   [[./img/cl.png]]
+
+   Comme on peut le voir, le procédé est similaire à celui utilisé
+   pour créer le réseau de collocations, avec toutefois une ressource
+   supplémentaire (ce même réseau de collocations).
+** Détection de lien entre les messages d'un même thread
+   Une fois la ressource des chaînes lexicales disponibles,
+   implémenter la détection de lien ne nécessite pas un procédé très
+   compliqué. Le fichier digest des threads est utilisé (une fois mis
+   sous forme de ressource) pour savoir quels messages l'on peut
+   relier et une fois la détection du message optimal à relier
+   effectuée, il est directement possible de remplier un fichier
+   résultat. Cette approche est résumée ci-dessous par un dernier
+   diagramme :
 
    #+ATTR_HTML: width="800px"
    [[./img/ld.png]]
-
-   L'idée est donc de fonctionner principalement autour de
-   ressources. Outre les mots outils qui aident à tokenizer le texte,
-   la ressource du réseau de collocations est utilisée pour produire
-   la ressource des chaînes lexicales, et cette dernière est utilisée
-   en conjonction avec les informations sur les threads pour créer le
-   résultat attendu.
 
    Une autre solution que celle retenue (la ressource partagée) pour
    avoir accès aux informations de tous les messages d'un thread
@@ -48,14 +105,18 @@
    UIMA ne facilitent pas ce genre d'opérations à l'heure actuelle et
    la méthode par ressource était plus facile à mettre en place. Il
    est cependant possible que merger les CAS soit plus efficace, en
-   particulier en espace mémoire requis.
+   particulier en espace mémoire requis, si l'implémentation arrive à
+   profiter pleinement des avantages théoriques de l'approche (ce qui
+   est un objectif dur à atteindre avec les CAS Multipliers actuels).
+* Design idéal
+  TODO
 * Design des ressources
 ** Ressource du réseau de collocations
    Cette ressource n'est pas détaillée car elle n'a pas évolué depuis
    le TP rendu début décembre.
 ** Ressoure des chaînes lexicales
-   Cette ressource permet de garder un mapping des messageId vers les
-   chaînes lexicales correspondantes. C'est donc un simple wrapper
+   Cette ressource permet de garder un mapping des identifiants des
+   messages vers leurs chaînes lexicales. C'est donc un simple wrapper
    autour d'une Map, à la manière de la ressource WordCounter vue en
    cours.
 ** Ressource d'info des threads
@@ -72,6 +133,9 @@
    L'implémentation proposée utilise deux Map, l'une avec pour clefs
    les identifiants de messages, l'autre avec pour clefs les
    identifiants de threads.
+
+   L'ensemble de ces méthodes offre une souplesse suffisante pour
+   traiter le problème qui nous concerne.
 * Design des composants
 ** AE de création du réseau de collocations
    Cet AE a été réimplémenté depuis le TP rendu début décembre. Il est
@@ -86,10 +150,10 @@
    Cet AE a été implémenté pour que les expérimentations sur les
    chaînes lexicales soient faciles par la suite. Il est donc possible
    de paramétrer, en plus des deux ressources nécessaires (le réseau
-   de collocation et la ressource “output” des chaînes lexicales :
+   de collocation et la ressource “output” des chaînes lexicales) :
 
-   - le fossé maximal entre deux mots considérés en relation de
-     collocation ;
+   - le fossé maximal entre deux mots pour qu'ils puissent être
+     considérés en relation de collocation ;
 
    - le score de collocation à partir duquel on considère que deux
      mots sont en relation de collocation ;
@@ -111,12 +175,30 @@
    d'un message depuis son messageId.
 ** AE de détection de liens entre messages
    Cet AE utilise une ressource qui rend disponible le thread digest,
-   en plus de la ressource contenant les chaînes lexicales. Il se
-   contente ensuite, quand un message arrive dans la méthode
-   =process=, de récupérer tous les messages du thread déjà passés par
-   =process= et de comparer le message courant avec chacun de ces
-   messages. Le message dont la comparaison donne le plus grand score
-   est considéré comme parent du message actuel.
+   en plus de la ressource contenant les chaînes lexicales. Pour
+   déterminer le meilleur message à lier au message courant, on lui
+   compare tous les autres messages de son thread et on lui lie le
+   message d'avec lequel la comparaison a donné le meilleur score.
+
+   L'algorithme utilisé pour la comparaison de deux ensembles de
+   chaînes lexicales (et donc deux messages) est extrêmement basique
+   (car il a été dit que l'intérêt du projet ne résidait pas dans
+   l'approche théorique mais dans le procédé d'implémentation mis en
+   place, donc cet algorithme n'a pas fait l'objet d'un travail
+   particulier). Il utilise la méthode =compare= fournie avec le
+   projet de départ (qui est un coefficient de Dice) :
+
+   #+BEGIN_SRC C
+   Entrée : m1 et m2 deux ensembles de chaînes
+            lexicales représentant deux messages
+   score ← 0
+   Pour toute chaîne lexicale c1 dans m1 :
+       Pour toute chaîne lexicale c2 dans m2 :
+           score ← score + coefficient de Dice de c1 et c2
+       Fin pour
+   Fin pour
+   Retourner score / |m1| / |m2|
+   #+END_SRC
 * Utilisation du logiciel
   Afin de rendre le développement du logiciel plus aisé sous Netbeans
   et autres IDEs différents d'Eclipse, le projet Eclipse a été
@@ -139,19 +221,27 @@
       linkInterMessageDetector.wf.CollocationNetworkBuilderWF
   #+END_SRC
 
-  Pour lancer le workflow de threading, il faut augmenter la limite de
-  mémoire (1024m sont suffisants chez moi mais ralentissent la fin de
-  l'exécution−le nettoyage du tas prenant visiblement beaucoup de
-  temps−2048m comme présenté ci-dessous sont donc plus confortables si
-  la machine de test le permet). Il faut aussi changer la classe
-  principale comme suit par rapport à l'appel précédent :
+  Le workflow de création des chaînes lexicales nécessite quand à lui
+  une augmentation de la mémoire disponible (1024m sont suffisants
+  chez moi mais ralentissent la fin de l'exécution−le nettoyage du tas
+  prenant visiblement beaucoup de temps−2048m comme présenté
+  ci-dessous sont donc plus confortables si la machine de test le
+  permet). L'appel est alors :
 
   #+BEGIN_SRC shell
   java -Xmx2048m \
       -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
-      linkInterMessageDetector.wf.MboxWF
+      linkInterMessageDetector.wf.LexicalChainsBuilderWF
   #+END_SRC
-  
+
+  Pour le workflow de détection de liens l'appel est :
+
+  #+BEGIN_SRC shell
+  java -Xmx2048m \
+      -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      linkInterMessageDetector.wf.LinksDetectionWF
+  #+END_SRC
+
   Note : aucune récupération d'arguments n'a été implémentée pour
   configurer les workflows. Il faut donc modifier directement les
   paramètres des AEs dans les classes des workflows voulus pour lancer
@@ -159,3 +249,7 @@
   convient de bien renseigner les chemins des ressources et outputs
   afin que le logiciel fonctionne correctement. Il faut repackager le
   logiciel pour que les changements prennent effet.
+
+  Il est aussi important d'exécuter ces 3 workflows dans l'odre
+  proposé ci-dessous pour un premier run car les fichiers outputs ne
+  sont pas fournis /a priori/ et chaque workflow dépend du précédent.
