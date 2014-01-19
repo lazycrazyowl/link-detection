@@ -38,7 +38,6 @@ public class LinkAE extends JCasAnnotator_ImplBase {
         }
         String bestId = null;
         Double bestScore = Double.NEGATIVE_INFINITY;
-        System.out.println("================");
         for (String message : messages) {
             Set<LexicalChain> otherChains = lexicalChains.getChains(message);
             if (otherChains.isEmpty()) {
