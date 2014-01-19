@@ -204,8 +204,8 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
     /**
      * Extracts the text content of a given html document.
      *
-     * @param sgmlDocument
-     * @return
+     * @param sgmlDocument the html document.
+     * @return the text of the html document.
      */
     private String getTextContent(String sgmlDocument) {
 
