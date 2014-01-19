@@ -53,8 +53,8 @@ public class LexicalChainsBuilderWF {
                 LexicalChainsAE.class,
                 LexicalChainsAE.RES_CN_KEY, collocationNetworkResourceDesc,
                 LexicalChainsAE.RES_CHAINS_KEY, chainsResourceDesc,
-                LexicalChainsAE.PARAM_GAP_SIZE, 15,
-                LexicalChainsAE.PARAM_SCORE_THRESHOLD, 1,
+                LexicalChainsAE.PARAM_GAP_SIZE, 20,
+                LexicalChainsAE.PARAM_SCORE_THRESHOLD, 10,
                 LexicalChainsAE.PARAM_MINIMUM_LENGTH, 2,
                 LexicalChainsAE.PARAM_RESOURCE_DEST_FILENAME, "output/lc.txt");
 
