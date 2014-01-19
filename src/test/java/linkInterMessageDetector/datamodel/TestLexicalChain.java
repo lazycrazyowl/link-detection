@@ -1,7 +1,6 @@
 package linkInterMessageDetector.datamodel;
 
-import static org.junit.Assert.*;
-
+import fr.univnantes.atal.nlpdev.linkdetection.datamodel.LexicalChain;
 import org.junit.Test;
 
 public class TestLexicalChain {
@@ -24,10 +23,9 @@ public class TestLexicalChain {
         lc2.add("vinasse");
 
         System.out.printf(
-                "Comparing %s with %s gives %f which stands for %s \n",
+                "Comparing %s with %s gives %f.\n",
                 lc1,
                 lc2,
-                lc1.compare(lc2),
-                lc1.isSimilar(lc2) ? "similar" : "notSimilar");
+                lc1.compare(lc2));
     }
 }
