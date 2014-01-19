@@ -8,6 +8,7 @@ import java.io.StringReader;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.apache.uima.UimaContext;
 import org.apache.uima.collection.CollectionException;
 import org.apache.uima.examples.SourceDocumentInformation;
@@ -29,7 +30,8 @@ import org.xml.sax.SAXException;
  */
 public class ZimReaderCR extends JCasCollectionReader_ImplBase {
 
-    private boolean quit = false;
+    private static final Logger logger = Logger.getLogger(
+            ZimReaderCR.class.getCanonicalName());
     /**
      * Path of the zim file whose articles should be turned into JCas.
      */
@@ -63,7 +65,7 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
 
     /**
      * Get a list of the urls contained in the zim file.
-     * 
+     *
      * @param context the UIMA context object
      */
     @Override
@@ -90,7 +92,8 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
 
             directoryEntry = zimReader.getDirectoryInfoAtTitlePosition(zimFile.getTitlePtrPos());
         } catch (IOException e) {
-            Util.abort("Could not open ZIM file.", e);
+            logger.error("could not open ZIM file");
+            Util.abort(e);
         }
 
     }
@@ -105,21 +108,24 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
         }
 
         if (articleUrlIndex == articleUrlList.size()) {
-            System.err.printf(
-                    "%s read %d articles of %s but only %d html with %d non "
-                    + "null",
-                    getClass().getSimpleName(),
-                    zimFile.getArticleCount(),
-                    zimFile.getName(),
-                    htmlIndex,
-                    articleDataNotNullIndex);
+            logger.info(
+                    getClass().getSimpleName()
+                    + " read "
+                    + zimFile.getArticleCount()
+                    + " articles of "
+                    + zimFile.getName()
+                    + " but only "
+                    + htmlIndex
+                    + " html with "
+                    + articleDataNotNullIndex
+                    + "non null");
         }
         return articleUrlIndex < articleUrlList.size();
     }
 
     /**
      * Document getter.
-     * 
+     *
      * @param jCas the jCas to fill with the new document information
      * @throws IOException
      * @throws CollectionException
@@ -168,6 +174,9 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
         srcDocInfo.setLastSegment(articleUrlIndex == articleUrlList.size());
         srcDocInfo.addToIndexes();
         articleUrlIndex++;
+        if (articleUrlIndex % 100 == 0) {
+            logger.info("processing article " + articleUrlIndex);
+        }
     }
 
     /**
@@ -231,9 +240,11 @@ public class ZimReaderCR extends JCasCollectionReader_ImplBase {
             tagsoupParser.parse(new InputSource(new StringReader(
                     sgmlDocument)));
         } catch (SAXException e) {
-            Util.abort("Could not parse the SGML document.", e);
+            logger.error("could not parse the SGML document");
+            Util.abort(e);
         } catch (IOException e) {
-            Util.abort("Could not open the SGML document.", e);
+            logger.error("could not open the SGML document");
+            Util.abort(e);
         }
         //System.out.printf("%s\n",xmlSaxHandler.getDetaggedText());
         //writeToFS(xmlSaxHandler.getDetaggedText(),"/tmp/detaggedText");

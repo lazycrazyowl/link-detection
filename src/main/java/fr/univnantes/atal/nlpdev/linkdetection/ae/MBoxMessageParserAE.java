@@ -4,6 +4,7 @@ import com.auxilii.msgparser.Message;
 import factory.parser.MBoxParser;
 import fr.univnantes.atal.nlpdev.linkdetection.types.Id;
 import fr.univnantes.atal.nlpdev.linkdetection.util.Util;
+import org.apache.log4j.Logger;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.component.ViewCreatorAnnotator;
@@ -11,11 +12,14 @@ import org.apache.uima.jcas.JCas;
 
 /**
  * Analysis Engine that extracts body text, ID and date from messages.
- * 
+ *
  * Creates a new view called “parsed” to store the body text as document text.
  * Stores the date and ID as annotations in this view as well.
  */
 public class MBoxMessageParserAE extends JCasAnnotator_ImplBase {
+
+    private static final Logger logger = Logger.getLogger(
+            MBoxMessageParserAE.class.getCanonicalName());
 
     @Override
     public void process(JCas aJCas)
@@ -26,7 +30,8 @@ public class MBoxMessageParserAE extends JCasAnnotator_ImplBase {
         try {
             message = mboxParser.parse(aJCas.getDocumentText());
         } catch (Exception e) {
-            Util.abort("Couldn't parse mbox.", e);
+            logger.error("couldn't parse mbox");
+            Util.abort(e);
         }
         String body = message.getBodyText();
         parsed.setDocumentText(body);

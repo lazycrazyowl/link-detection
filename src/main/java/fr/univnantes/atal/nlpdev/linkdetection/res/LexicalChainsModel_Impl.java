@@ -25,8 +25,8 @@ import org.apache.uima.resource.SharedResourceObject;
 public class LexicalChainsModel_Impl
         implements LexicalChainsModel, SharedResourceObject {
 
-    private static final Logger logger =
-            Logger.getLogger(LexicalChainsModel_Impl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(
+            LexicalChainsModel_Impl.class.getCanonicalName());
     private final Map<String, Set<LexicalChain>> chains = new HashMap<>();
 
     @Override
@@ -37,11 +37,12 @@ public class LexicalChainsModel_Impl
         try {
             is = aData.getInputStream();
         } catch (NullPointerException ex) {
-            // We didn't find an input stream to open
-            // Nothing to load
+            logger.info("| nothing to load");
+            logger.info("< done loading lexical chains");
             return;
         } catch (IOException ex) {
-            Util.abort("Couldn't load the lexical chain models.", ex);
+            logger.error("couldn't load the lexical chain models");
+            Util.abort(ex);
         }
         try (BufferedReader br = new BufferedReader(new InputStreamReader(
                         is))) {
@@ -56,7 +57,8 @@ public class LexicalChainsModel_Impl
                 }
             }
         } catch (IOException ex) {
-            Util.abort("Couldn't load the lexical chain models.", ex);
+            logger.error("couldn't load the lexical chain models");
+            Util.abort(ex);
         }
         logger.info("< done loading lexical chains");
     }
@@ -93,7 +95,8 @@ public class LexicalChainsModel_Impl
                 }
             }
         } catch (IOException e) {
-            Util.abort("Couldn't open output file “" + filename + "”.", e);
+            logger.error("couldn't open output file “" + filename + "”");
+            Util.abort(e);
         }
     }
 }

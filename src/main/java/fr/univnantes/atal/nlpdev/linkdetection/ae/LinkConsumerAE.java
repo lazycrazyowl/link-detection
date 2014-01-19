@@ -5,6 +5,7 @@ import fr.univnantes.atal.nlpdev.linkdetection.types.Link;
 import fr.univnantes.atal.nlpdev.linkdetection.util.Util;
 import java.io.FileNotFoundException;
 import java.io.PrintWriter;
+import org.apache.log4j.Logger;
 import org.apache.uima.UimaContext;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -19,6 +20,8 @@ import org.apache.uima.resource.ResourceInitializationException;
  */
 public class LinkConsumerAE extends JCasAnnotator_ImplBase {
 
+    private static final Logger logger = Logger.getLogger(
+            LinkConsumerAE.class.getCanonicalName());
     /**
      * Key of the output filename parameter.
      */
@@ -36,7 +39,8 @@ public class LinkConsumerAE extends JCasAnnotator_ImplBase {
         try {
             pw = new PrintWriter(outFilename);
         } catch (FileNotFoundException ex) {
-            Util.abort("Couldn't open output file.", ex);
+            logger.error("couldn't open output file.");
+            Util.abort(ex);
         }
     }
 

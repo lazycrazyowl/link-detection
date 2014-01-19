@@ -20,8 +20,8 @@ import org.apache.uima.resource.SharedResourceObject;
  */
 public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
 
-    private static final Logger logger =
-            Logger.getLogger(ThreadModel_Impl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(
+            ThreadModel_Impl.class.getCanonicalName());
     private final Map<String, Set<String>> byThreads = new HashMap<>();
     private final Map<String, String> byMessages = new HashMap<>();
 
@@ -43,12 +43,12 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
         try {
             is = aData.getInputStream();
         } catch (NullPointerException ex) {
-            Util.abort(
-                    "Please provide a thread digest file as parameter to this "
-                    + "resource. If you provided one it wasn't correct.",
-                    null);
+            logger.error("please provide a thread digest file as parameter to "
+                    + "this resource. If you provided one it wasn't correct");
+            System.exit(1);
         } catch (IOException ex) {
-            Util.abort("Couldn't open the thread digest file.", ex);
+            logger.error("couldn't open the thread digest file");
+            Util.abort(ex);
         }
         try (BufferedReader br = new BufferedReader(
                         new InputStreamReader(is))) {
@@ -72,7 +72,8 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
                 }
             }
         } catch (IOException ex) {
-            Util.abort("Couldn't open the thread digest file.", ex);
+            logger.error("couldn't open the thread digest file");
+            Util.abort(ex);
         }
         logger.info("> done loading thread info");
     }

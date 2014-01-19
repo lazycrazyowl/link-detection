@@ -9,6 +9,7 @@ import java.util.Deque;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
+import org.apache.log4j.Logger;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -22,6 +23,8 @@ import org.apache.uima.jcas.JCas;
  */
 public class CollocationNetworkBuilderAE extends JCasAnnotator_ImplBase {
 
+    private static final Logger logger = Logger.getLogger(
+            CollocationNetworkBuilderAE.class.getCanonicalName());
     /**
      * Key of the collocation network resource.
      */
@@ -65,9 +68,8 @@ public class CollocationNetworkBuilderAE extends JCasAnnotator_ImplBase {
             queue.addLast(word);
             Iterator<String> it = queue.iterator();
             if (!it.hasNext()) {
-                System.err.println("Couldn't build collocation network.");
-                System.err.println("Aborting.");
-                System.err.println("Reason: empty window at a wrong point.");
+                logger.error("Couldn't build collocation network.");
+                System.exit(1);
             } else {
                 String current = it.next();
                 while (it.hasNext()) {
@@ -79,9 +81,8 @@ public class CollocationNetworkBuilderAE extends JCasAnnotator_ImplBase {
         while (!queue.isEmpty()) {
             Iterator<String> it = queue.iterator();
             if (!it.hasNext()) {
-                System.err.println("Couldn't build collocation network.");
-                System.err.println("Aborting.");
-                System.err.println("Reason: empty window at a wrong point.");
+                logger.error("Couldn't build collocation network.");
+                System.exit(1);
             } else {
                 String current = it.next();
                 while (it.hasNext()) {

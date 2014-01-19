@@ -11,6 +11,7 @@ import java.util.Iterator;
 import org.apache.commons.io.IOUtils;
 import org.apache.james.mime4j.mboxiterator.CharBufferWrapper;
 import org.apache.james.mime4j.mboxiterator.MboxIterator;
+import org.apache.log4j.Logger;
 import org.apache.uima.UimaContext;
 import org.apache.uima.collection.CollectionException;
 import org.apache.uima.examples.SourceDocumentInformation;
@@ -25,7 +26,8 @@ import org.apache.uima.util.Progress;
  */
 public class MboxReaderCR extends JCasCollectionReader_ImplBase {
 
-    private boolean quit = false;
+    private static final Logger logger = Logger.getLogger(
+            MboxReaderCR.class.getCanonicalName());
     /**
      * Path of the mbox file whose messages should be turned into JCas.
      */
@@ -55,7 +57,7 @@ public class MboxReaderCR extends JCasCollectionReader_ImplBase {
 
     /**
      * Gets an iterator on the mbox.
-     * 
+     *
      * @param context the UIMA context object
      */
     @Override
@@ -73,9 +75,11 @@ public class MboxReaderCR extends JCasCollectionReader_ImplBase {
                     .build()
                     .iterator();
         } catch (FileNotFoundException e) {
-            Util.abort("Could not find the mbox file.", e);
+            logger.error("could not find the mbox file");
+            Util.abort(e);
         } catch (IOException e) {
-            Util.abort("Could not open the mbox file.", e);
+            logger.error("could not process the mbox file");
+            Util.abort(e);
         }
 
     }
@@ -90,7 +94,7 @@ public class MboxReaderCR extends JCasCollectionReader_ImplBase {
 
     /**
      * Message getter.
-     * 
+     *
      * @param jCas the jCas to fill with the new message information
      * @throws IOException
      * @throws CollectionException
@@ -136,6 +140,9 @@ public class MboxReaderCR extends JCasCollectionReader_ImplBase {
         // TODO cannot know when the last segment is encountered with an iterator
         srcDocInfo.addToIndexes();
         messageIndex++;
+        if (messageIndex % 100 == 0) {
+            logger.info("processing message " + messageIndex);
+        }
     }
 
     /**

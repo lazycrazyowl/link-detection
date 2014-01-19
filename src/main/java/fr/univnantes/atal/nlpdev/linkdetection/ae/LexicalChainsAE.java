@@ -8,6 +8,7 @@ import fr.univnantes.atal.nlpdev.linkdetection.types.Id;
 import java.util.HashSet;
 import java.util.Locale;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
 import org.apache.uima.fit.descriptor.ConfigurationParameter;
@@ -21,6 +22,8 @@ import org.apache.uima.jcas.JCas;
  */
 public class LexicalChainsAE extends JCasAnnotator_ImplBase {
 
+    private static final Logger logger = Logger.getLogger(
+            LexicalChainsAE.class.getCanonicalName());
     /**
      * Key of the collocation network resource.
      */
@@ -118,7 +121,12 @@ public class LexicalChainsAE extends JCasAnnotator_ImplBase {
             }
         }
         String id = JCasUtil.selectSingle(aJCas, Id.class).getUid();
-        System.out.println("\r" + id + ": " + counter++ + ": " + result.size());
+        logger.debug(
+                "processed message "
+                + id
+                + ": made "
+                + counter
+                + " lexical chains.");
         lexicalChains.setChains(id, result);
     }
 

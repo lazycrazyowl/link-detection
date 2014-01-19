@@ -14,6 +14,7 @@ package common.util;
  * governing permissions and limitations under the License.
  */
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.xml.sax.Attributes;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
@@ -27,6 +28,8 @@ import org.xml.sax.helpers.DefaultHandler;
  */
 public class SgmlTextExtractorSaxHandler extends DefaultHandler {
 
+    private static final Logger logger = Logger.getLogger(
+            SgmlTextExtractorSaxHandler.class.getCanonicalName());
     /**
      * Detagged text
      */
@@ -149,7 +152,7 @@ public class SgmlTextExtractorSaxHandler extends DefaultHandler {
      */
     @Override
     public void setDocumentLocator(Locator l) {
-        System.err.println("Debug: systemId()>" + l.getSystemId()
+        logger.debug("systemId()>" + l.getSystemId()
                 + "< publicId()>" + l.getPublicId()
                 + "< columnNumber>" + l.getColumnNumber()
                 + "< lineNumber>" + l.getLineNumber() + "<");

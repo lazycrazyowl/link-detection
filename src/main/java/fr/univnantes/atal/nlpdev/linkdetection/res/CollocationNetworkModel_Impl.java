@@ -11,8 +11,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+import org.apache.log4j.Logger;
 import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
@@ -24,8 +23,7 @@ import org.apache.uima.resource.SharedResourceObject;
 public final class CollocationNetworkModel_Impl
         implements CollocationNetworkModel, SharedResourceObject {
 
-    private static final org.apache.log4j.Logger logger =
-            org.apache.log4j.Logger.getLogger(
+    private static final Logger logger = Logger.getLogger(
             CollocationNetworkModel_Impl.class.getCanonicalName());
     private final Map<String, Map<String, Double>> collocationNetworkMap =
             new HashMap<>();
@@ -40,12 +38,12 @@ public final class CollocationNetworkModel_Impl
         try {
             is = aData.getInputStream();
         } catch (NullPointerException ex) {
-            // We didn't find an input stream to open
-            // Nothing to load
+            logger.info("| nothing to load");
+            logger.info("< done loading collocation network");
             return;
         } catch (IOException ex) {
-            Logger.getLogger(CollocationNetworkModel_Impl.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            logger.error("couldn't process the collocation network file");
+            Util.abort(ex);
         }
         try (BufferedReader br = new BufferedReader(
                         new InputStreamReader(is))) {
@@ -68,8 +66,8 @@ public final class CollocationNetworkModel_Impl
                 }
             }
         } catch (IOException ex) {
-            Logger.getLogger(CollocationNetworkModel_Impl.class.getName())
-                    .log(Level.SEVERE, null, ex);
+            logger.error("couldn't process the collocation network file");
+            Util.abort(ex);
         }
         logger.info("< done loading collocation network");
     }
@@ -263,7 +261,8 @@ public final class CollocationNetworkModel_Impl
                 }
             }
         } catch (IOException e) {
-            Util.abort("Couldn't open output file “" + filename + "”.", e);
+            logger.error("couldn't open output file “" + filename + "”");
+            Util.abort(e);
         }
     }
 }

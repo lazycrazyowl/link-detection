@@ -16,8 +16,8 @@ import org.apache.uima.resource.SharedResourceObject;
 public final class StopWordModel_Impl
         implements StopWordModel, SharedResourceObject {
 
-    private static final Logger logger =
-            Logger.getLogger(StopWordModel_Impl.class.getCanonicalName());
+    private static final Logger logger = Logger.getLogger(
+            StopWordModel_Impl.class.getCanonicalName());
     private Set<String> stopWordSet;
 
     private synchronized Set<String> getStopWords() {

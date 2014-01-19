@@ -6,7 +6,7 @@
     <appender name="CA" class="org.apache.log4j.ConsoleAppender">
         <layout class="org.apache.log4j.PatternLayout">
             <!-- Previous pattern value: "%-4r [%t] %-5p %c %x - %m%n" -->
-            <param name="ConversionPattern" value="%-5p [%c{1}]: %m%n" />
+            <param name="ConversionPattern" value="[%-4p] %c{1}: %m%n" />
         </layout>
     </appender>
     <logger name="fr.univnantes.atal.nlpdev.linkdetection">
