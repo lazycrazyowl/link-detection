@@ -1,1 +1,2 @@
-classpath*:**/types/*TS.xml
+classpath*:common/types/CommonTS.xml
+classpath*:fr/univnantes/atal/nlpdev/linkdetection/types/LinkDetectionTS.xml

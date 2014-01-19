@@ -1,5 +1,5 @@
 
-/* First created by JCasGen Fri Oct 25 12:10:34 CEST 2013 */
+/* First created by JCasGen Sun Jan 19 22:51:55 CET 2014 */
 package common.types;
 
 import org.apache.uima.jcas.JCas;
@@ -12,7 +12,7 @@ import org.apache.uima.cas.Type;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Fri Oct 25 12:41:37 CEST 2013
+ * Updated by JCasGen Sun Jan 19 22:51:55 CET 2014
  * @generated */
 public class Token_Type extends Annotation_Type {
   /** @generated */

@@ -1,6 +1,6 @@
 
 
-/* First created by JCasGen Fri Oct 25 12:10:34 CEST 2013 */
+/* First created by JCasGen Sun Jan 19 22:51:55 CET 2014 */
 package common.types;
 
 import org.apache.uima.jcas.JCas; 
@@ -11,8 +11,8 @@ import org.apache.uima.jcas.tcas.Annotation;
 
 
 /** 
- * Updated by JCasGen Fri Oct 25 12:41:37 CEST 2013
- * XML source: /media/ext4/teaching/5a.ATAL.M2.Dev-log-et-projet/nlp-software-development/workspace/resourceManagement/src/main/resources/resourceManagement/types/CommonTS.xml
+ * Updated by JCasGen Sun Jan 19 22:51:55 CET 2014
+ * XML source: /mnt/data/work/link-detection/src/main/resources/common/types/CommonTS.xml
  * @generated */
 public class Token extends Annotation {
   /** @generated
