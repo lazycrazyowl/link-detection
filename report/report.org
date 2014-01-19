@@ -110,95 +110,98 @@
    est un objectif dur à atteindre avec les CAS Multipliers actuels).
 * Design idéal
   TODO
-* Design des ressources
-** Ressource du réseau de collocations
-   Cette ressource n'est pas détaillée car elle n'a pas évolué depuis
-   le TP rendu début décembre.
-** Ressoure des chaînes lexicales
-   Cette ressource permet de garder un mapping des identifiants des
-   messages vers leurs chaînes lexicales. C'est donc un simple wrapper
-   autour d'une Map, à la manière de la ressource WordCounter vue en
-   cours.
-** Ressource d'info des threads
-   Cette ressource expose les informations contenues dans le fichier
-   thread digest par deux méthodes :
+* Implémentation
+** Ressources
+*** Réseau de collocations
+    Cette ressource n'est pas détaillée car elle n'a pas évolué depuis
+    le TP rendu début décembre.
+*** Chaînes lexicales
+    Cette ressource permet de garder un mapping des identifiants des
+    messages vers leurs chaînes lexicales. C'est donc un simple
+    wrapper autour d'une Map, à la manière de la ressource WordCounter
+    vue en cours.
+*** Info des threads
+    Cette ressource expose les informations contenues dans le fichier
+    thread digest par deux méthodes :
 
-   - la première permet de récupérer l'identifiant d'un thread étant
-     donné l'identifiant d'un message (l'identifiant d'un thread est
-     l'identifiant de son premier message)
+    - la première permet de récupérer l'identifiant d'un thread étant
+      donné l'identifiant d'un message (l'identifiant d'un thread est
+      l'identifiant de son premier message)
 
-   - la seconde permet de récupérer les identifiants des messages d'un
-     thread étant donné l'identifiant de ce thread.
+    - la seconde permet de récupérer les identifiants des messages
+      d'un thread étant donné l'identifiant de ce thread.
 
-   L'implémentation proposée utilise deux Map, l'une avec pour clefs
-   les identifiants de messages, l'autre avec pour clefs les
-   identifiants de threads.
+    L'implémentation proposée utilise deux Map, l'une avec pour clefs
+    les identifiants de messages, l'autre avec pour clefs les
+    identifiants de threads.
 
-   L'ensemble de ces méthodes offre une souplesse suffisante pour
-   traiter le problème qui nous concerne.
-* Design des composants
-** AE de création du réseau de collocations
-   Cet AE a été réimplémenté depuis le TP rendu début décembre. Il est
-   maintenant conçu pour que la taille de la fenêtre soit paramètrable
-   et le parcours de cette fenêtre se fait avec queue pour une
-   efficacité optimale.
-** AE de segmentation
-   Une modification a été apportée pour ne garder que les mots de deux
-   lettres ou plus constitués seulement de lettres (=p{L}{2,}=), pour
-   limiter le bruit.
-** AE de création des chaînes lexicales
-   Cet AE a été implémenté pour que les expérimentations sur les
-   chaînes lexicales soient faciles par la suite. Il est donc possible
-   de paramétrer, en plus des deux ressources nécessaires (le réseau
-   de collocation et la ressource “output” des chaînes lexicales) :
+    L'ensemble de ces méthodes offre une souplesse suffisante pour
+    traiter le problème qui nous concerne.
+** Composants
+*** AE de création du réseau de collocations
+    Cet AE a été réimplémenté depuis le TP rendu début décembre. Il
+    est maintenant conçu pour que la taille de la fenêtre soit
+    paramètrable et le parcours de cette fenêtre se fait avec queue
+    pour une efficacité optimale.
+*** AE de segmentation
+    Une modification a été apportée pour ne garder que les mots de
+    deux lettres ou plus constitués seulement de lettres (=p{L}{2,}=),
+    pour limiter le bruit.
+*** AE de création des chaînes lexicales
+    Cet AE a été implémenté pour que les expérimentations sur les
+    chaînes lexicales soient faciles par la suite. Il est donc
+    possible de paramétrer, en plus des deux ressources nécessaires
+    (le réseau de collocation et la ressource “output” des chaînes
+    lexicales) :
 
-   - le fossé maximal entre deux mots pour qu'ils puissent être
-     considérés en relation de collocation ;
+    - le fossé maximal entre deux mots pour qu'ils puissent être
+      considérés en relation de collocation ;
 
-   - le score de collocation à partir duquel on considère que deux
-     mots sont en relation de collocation ;
+    - le score de collocation à partir duquel on considère que deux
+      mots sont en relation de collocation ;
 
-   - la longueur minimale des chaînes lexicales retenues.
+    - la longueur minimale des chaînes lexicales retenues.
 
-   La création des chaînes lexicales se fait en ne visitant chaque
-   mot du message qu'une fois et en l'intègrant ou non aux chaînes
-   lexicales existantes. Les chaînes lexicales ne sont pas mergées.
+    La création des chaînes lexicales se fait en ne visitant chaque
+    mot du message qu'une fois et en l'intègrant ou non aux chaînes
+    lexicales existantes. Les chaînes lexicales ne sont pas mergées.
 
-   /i.e./, si on a les chaînes lexicales ={soleil, pluie}= et ={commerce}=
-   au pas 2 et qu'on rencontre =vente= au pas 3, qui pourrait
-   s'intégrer aux deux chaînes, on ne les regroupe pas. D'une part
-   pour une question de performance et d'autre part parce que le merge
-   n'est pas toujours justifié, comme on le voit avec cet exemple.
+    /i.e./, si on a les chaînes lexicales ={soleil, pluie}= et
+    ={commerce}= au pas 2 et qu'on rencontre =vente= au pas 3, qui
+    pourrait s'intégrer aux deux chaînes, on ne les regroupe
+    pas. D'une part pour une question de performance et d'autre part
+    parce que le merge n'est pas toujours justifié, comme on le voit
+    avec cet exemple.
 
-   Une fois ces chaînes créées, elles sont ajoutées à la ressource
-   =LexicalChainModel= qui permet de retrouver les chaînes lexicales
-   d'un message depuis son messageId.
-** AE de détection de liens entre messages
-   Cet AE utilise une ressource qui rend disponible le thread digest,
-   en plus de la ressource contenant les chaînes lexicales. Pour
-   déterminer le meilleur message à lier au message courant, on lui
-   compare tous les autres messages de son thread et on lui lie le
-   message d'avec lequel la comparaison a donné le meilleur score.
+    Une fois ces chaînes créées, elles sont ajoutées à la ressource
+    =LexicalChainModel= qui permet de retrouver les chaînes lexicales
+    d'un message depuis son messageId.
+*** AE de détection de liens entre messages
+    Cet AE utilise une ressource qui rend disponible le thread digest,
+    en plus de la ressource contenant les chaînes lexicales. Pour
+    déterminer le meilleur message à lier au message courant, on lui
+    compare tous les autres messages de son thread et on lui lie le
+    message d'avec lequel la comparaison a donné le meilleur score.
 
-   L'algorithme utilisé pour la comparaison de deux ensembles de
-   chaînes lexicales (et donc deux messages) est extrêmement basique
-   (car il a été dit que l'intérêt du projet ne résidait pas dans
-   l'approche théorique mais dans le procédé d'implémentation mis en
-   place, donc cet algorithme n'a pas fait l'objet d'un travail
-   particulier). Il utilise la méthode =compare= fournie avec le
-   projet de départ (qui est un coefficient de Dice) :
+    L'algorithme utilisé pour la comparaison de deux ensembles de
+    chaînes lexicales (et donc deux messages) est extrêmement basique
+    (car il a été dit que l'intérêt du projet ne résidait pas dans
+    l'approche théorique mais dans le procédé d'implémentation mis en
+    place, donc cet algorithme n'a pas fait l'objet d'un travail
+    particulier). Il utilise la méthode =compare= fournie avec le
+    projet de départ (qui est un coefficient de Dice) :
 
-   #+BEGIN_SRC C
-   Entrée : m1 et m2 deux ensembles de chaînes
-            lexicales représentant deux messages
-   score ← 0
-   Pour toute chaîne lexicale c1 dans m1 :
-       Pour toute chaîne lexicale c2 dans m2 :
-           score ← score + coefficient de Dice de c1 et c2
-       Fin pour
-   Fin pour
-   Retourner score / |m1| / |m2|
-   #+END_SRC
+    #+BEGIN_SRC C
+    Entrée : m1 et m2 deux ensembles de chaînes
+             lexicales représentant deux messages
+    score ← 0
+    Pour toute chaîne lexicale c1 dans m1 :
+        Pour toute chaîne lexicale c2 dans m2 :
+            score ← score + coefficient de Dice de c1 et c2
+        Fin pour
+    Fin pour
+    Retourner score / |m1| / |m2|
+    #+END_SRC
 * Utilisation du logiciel
   Afin de rendre le développement du logiciel plus aisé sous Netbeans
   et autres IDEs différents d'Eclipse, le projet Eclipse a été
@@ -253,3 +256,6 @@
   Il est aussi important d'exécuter ces 3 workflows dans l'odre
   proposé ci-dessous pour un premier run car les fichiers outputs ne
   sont pas fournis /a priori/ et chaque workflow dépend du précédent.
+* Discussions
+** UIMA vs d'autres méthodes
+   Parmi les avantages de l'utilisation d'UIMA
