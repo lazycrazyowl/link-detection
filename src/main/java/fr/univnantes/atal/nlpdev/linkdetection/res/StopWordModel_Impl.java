@@ -36,7 +36,7 @@ public final class StopWordModel_Impl
     @Override
     public synchronized void load(DataResource aData)
             throws ResourceInitializationException {
-        logger.debug("> starting to load stop words");
+        logger.info("> starting to load stop words");
         if (stopWordSet == null) {
             stopWordSet = new HashSet<>();
             try (BufferedReader br = new BufferedReader(new InputStreamReader(
@@ -51,6 +51,6 @@ public final class StopWordModel_Impl
                 throw new ResourceInitializationException(e);
             }
         }
-        logger.debug("< done loading stop words");
+        logger.info("< done loading stop words");
     }
 }

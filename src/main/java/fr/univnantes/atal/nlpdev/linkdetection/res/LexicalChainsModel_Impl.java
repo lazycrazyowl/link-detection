@@ -14,6 +14,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.log4j.Logger;
 import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
@@ -24,11 +25,14 @@ import org.apache.uima.resource.SharedResourceObject;
 public class LexicalChainsModel_Impl
         implements LexicalChainsModel, SharedResourceObject {
 
+    private static final Logger logger =
+            Logger.getLogger(LexicalChainsModel_Impl.class.getCanonicalName());
     private final Map<String, Set<LexicalChain>> chains = new HashMap<>();
 
     @Override
     public void load(DataResource aData)
             throws ResourceInitializationException {
+        logger.info("> starting to load lexical chains");
         InputStream is = null;
         try {
             is = aData.getInputStream();
@@ -54,6 +58,7 @@ public class LexicalChainsModel_Impl
         } catch (IOException ex) {
             Util.abort("Couldn't load the lexical chain models.", ex);
         }
+        logger.info("< done loading lexical chains");
     }
 
     @Override

@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
+import org.apache.log4j.Logger;
 import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
@@ -19,6 +20,8 @@ import org.apache.uima.resource.SharedResourceObject;
  */
 public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
 
+    private static final Logger logger =
+            Logger.getLogger(ThreadModel_Impl.class.getCanonicalName());
     private final Map<String, Set<String>> byThreads = new HashMap<>();
     private final Map<String, String> byMessages = new HashMap<>();
 
@@ -33,7 +36,9 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
     }
 
     @Override
-    public void load(DataResource aData) throws ResourceInitializationException {
+    public void load(DataResource aData)
+            throws ResourceInitializationException {
+        logger.info("> starting to load thread info");
         InputStream is = null;
         try {
             is = aData.getInputStream();
@@ -69,5 +74,6 @@ public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
         } catch (IOException ex) {
             Util.abort("Couldn't open the thread digest file.", ex);
         }
+        logger.info("> done loading thread info");
     }
 }

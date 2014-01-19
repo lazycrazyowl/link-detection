@@ -24,6 +24,9 @@ import org.apache.uima.resource.SharedResourceObject;
 public final class CollocationNetworkModel_Impl
         implements CollocationNetworkModel, SharedResourceObject {
 
+    private static final org.apache.log4j.Logger logger =
+            org.apache.log4j.Logger.getLogger(
+            CollocationNetworkModel_Impl.class.getCanonicalName());
     private final Map<String, Map<String, Double>> collocationNetworkMap =
             new HashMap<>();
     private final static double initialValue = 0.;
@@ -32,6 +35,7 @@ public final class CollocationNetworkModel_Impl
     @Override
     public void load(DataResource aData)
             throws ResourceInitializationException {
+        logger.info("> starting to load collocation network");
         InputStream is = null;
         try {
             is = aData.getInputStream();
@@ -67,6 +71,7 @@ public final class CollocationNetworkModel_Impl
             Logger.getLogger(CollocationNetworkModel_Impl.class.getName())
                     .log(Level.SEVERE, null, ex);
         }
+        logger.info("< done loading collocation network");
     }
 
     @Override
