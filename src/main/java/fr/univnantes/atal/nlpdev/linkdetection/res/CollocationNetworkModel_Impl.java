@@ -17,14 +17,18 @@ import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
 
+/**
+ * Implementation of CollocationNetworkModel based on a queue to go through the
+ * collocation window.
+ */
 public final class CollocationNetworkModel_Impl
         implements CollocationNetworkModel, SharedResourceObject {
-    
+
     private final Map<String, Map<String, Double>> collocationNetworkMap =
             new HashMap<>();
     private final static double initialValue = 0.;
     private final static int incrementValue = 1;
-    
+
     @Override
     public void load(DataResource aData)
             throws ResourceInitializationException {
@@ -64,7 +68,7 @@ public final class CollocationNetworkModel_Impl
                     .log(Level.SEVERE, null, ex);
         }
     }
-    
+
     @Override
     public Double get(String word, String collocation) {
         if (collocationNetworkMap.containsKey(word)) {
@@ -75,7 +79,7 @@ public final class CollocationNetworkModel_Impl
         }
         return initialValue;
     }
-    
+
     @Override
     public synchronized void inc(String key, String collocation) {
         if (!collocationNetworkMap.containsKey(key)) {
@@ -99,7 +103,7 @@ public final class CollocationNetworkModel_Impl
             wordMap.put(key, wordMap.get(key) + incrementValue);
         }
     }
-    
+
     @Override
     public synchronized void inc(
             String key,
@@ -126,7 +130,7 @@ public final class CollocationNetworkModel_Impl
             wordMap.put(key, wordMap.get(key) + howMuch);
         }
     }
-    
+
     @Override
     public synchronized void dec(String key, String collocation) {
         if (!collocationNetworkMap.containsKey(key)) {
@@ -156,12 +160,12 @@ public final class CollocationNetworkModel_Impl
                     wordMap.get(collocation) - incrementValue));
         }
     }
-    
+
     @Override
     public Integer size() {
         return collocationNetworkMap.size();
     }
-    
+
     @Override
     public Integer size(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -169,12 +173,12 @@ public final class CollocationNetworkModel_Impl
         }
         return collocationNetworkMap.get(word).size();
     }
-    
+
     @Override
     public Set<String> keySet() {
         return Collections.unmodifiableSet(collocationNetworkMap.keySet());
     }
-    
+
     @Override
     public Set<String> keySet(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -182,7 +186,7 @@ public final class CollocationNetworkModel_Impl
         }
         return Collections.unmodifiableSet(collocationNetworkMap.get(word).keySet());
     }
-    
+
     @Override
     public Double getTotalCounter() {
         double total = 0;
@@ -193,7 +197,7 @@ public final class CollocationNetworkModel_Impl
         }
         return total;
     }
-    
+
     @Override
     public Double getTotalCounter(String word) {
         if (!collocationNetworkMap.containsKey(word)) {
@@ -205,7 +209,15 @@ public final class CollocationNetworkModel_Impl
         }
         return total;
     }
-    
+
+    /**
+     * Returns a representation of the collocation network that uses a line per
+     * collocation.
+     *
+     * The format is word\tcollocation\tscore\n
+     *
+     * @return the string representation of the collocation network.
+     */
     @Override
     public String toString() {
         StringBuilder sb = new StringBuilder();
@@ -224,12 +236,12 @@ public final class CollocationNetworkModel_Impl
         }
         return sb.toString();
     }
-    
+
     @Override
     public void echo() {
         System.out.println(this);
     }
-    
+
     @Override
     public void save(String filename) {
         try (PrintWriter pw = new PrintWriter(filename)) {

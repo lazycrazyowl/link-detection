@@ -18,6 +18,9 @@ import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
 
+/**
+ * Implementation of LexicalChainModel.
+ */
 public class LexicalChainsModel_Impl
         implements LexicalChainsModel, SharedResourceObject {
 

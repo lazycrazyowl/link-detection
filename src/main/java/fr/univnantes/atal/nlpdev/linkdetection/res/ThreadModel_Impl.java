@@ -14,6 +14,9 @@ import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
 
+/**
+ * Implementation of ThreadModel based on two maps.
+ */
 public class ThreadModel_Impl implements ThreadModel, SharedResourceObject {
 
     private final Map<String, Set<String>> byThreads = new HashMap<>();

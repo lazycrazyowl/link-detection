@@ -10,6 +10,9 @@ import org.apache.uima.resource.DataResource;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.apache.uima.resource.SharedResourceObject;
 
+/**
+ * Implementation of StopWordModel.
+ */
 public final class StopWordModel_Impl
         implements StopWordModel, SharedResourceObject {
 

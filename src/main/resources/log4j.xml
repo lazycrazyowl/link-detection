@@ -9,14 +9,8 @@
             <param name="ConversionPattern" value="%-5p [%c{1}]: %m%n" />
         </layout>
     </appender>
-    <logger name="eu.khresmoi.expansion">
+    <logger name="fr.univnantes.atal.nlpdev.linkdetection">
         <level value="INFO"/>
-    </logger>
-    <logger name="eu.khresmoi.expansion.Launcher">
-        <level value="DEBUG"/>
-    </logger>
-    <logger name="eu.khresmoi.expansion.Config">
-        <level value="DEBUG"/>
     </logger>
     <root>
         <priority value="WARN"/>
