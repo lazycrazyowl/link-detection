@@ -39,6 +39,9 @@ public class LinkAE extends JCasAnnotator_ImplBase {
         String bestId = null;
         Double bestScore = Double.NEGATIVE_INFINITY;
         for (String message : messages) {
+            if (message.equals(id)) {
+                continue;
+            }
             Set<LexicalChain> otherChains = lexicalChains.getChains(message);
             if (otherChains.isEmpty()) {
                 continue;
@@ -59,7 +62,8 @@ public class LinkAE extends JCasAnnotator_ImplBase {
         double score = 0d;
         for (LexicalChain chain1 : chains) {
             for (LexicalChain chain2 : otherChains) {
-                score += chain1.compare(chain2);
+                Double comparison = chain1.compare(chain2);
+                score += comparison;
             }
         }
         return score / (chains.size() * otherChains.size());
