@@ -1,5 +1,5 @@
 
-/* First created by JCasGen Sun Jan 19 22:52:20 CET 2014 */
+/* First created by JCasGen Mon Jan 20 13:57:39 CET 2014 */
 package fr.univnantes.atal.nlpdev.linkdetection.types;
 
 import org.apache.uima.jcas.JCas;
@@ -14,7 +14,7 @@ import org.apache.uima.cas.Feature;
 import org.apache.uima.jcas.tcas.Annotation_Type;
 
 /** 
- * Updated by JCasGen Sun Jan 19 22:52:20 CET 2014
+ * Updated by JCasGen Mon Jan 20 13:57:39 CET 2014
  * @generated */
 public class Link_Type extends Annotation_Type {
   /** @generated */
