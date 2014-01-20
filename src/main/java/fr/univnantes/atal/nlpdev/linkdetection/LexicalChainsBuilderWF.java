@@ -66,7 +66,7 @@ public class LexicalChainsBuilderWF {
                 MboxReaderCR.class,
                 MboxReaderCR.PARAM_MBOX_SRCPATH, "data/ubuntu-fr.mbox",
                 MboxReaderCR.PARAM_LANGUAGE, "fr",
-                MboxReaderCR.PARAM_ENCODING, "ISO-8859");
+                MboxReaderCR.PARAM_ENCODING, "iso-8859-1");
 
         AggregateBuilder builder = new AggregateBuilder();
         builder.add(parserAe);
