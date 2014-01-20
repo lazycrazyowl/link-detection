@@ -84,7 +84,7 @@
    Comme on peut le voir, le procédé est similaire à celui utilisé
    pour créer le réseau de collocations, avec toutefois une ressource
    supplémentaire (ce même réseau de collocations).
-** Détection de lien entre les messages d'un même thread
+** Détection de liens entre les messages d'un même thread
    Une fois la ressource des chaînes lexicales disponibles,
    implémenter la détection de lien ne nécessite pas un procédé très
    compliqué. Le fichier digest des threads est utilisé (une fois mis
@@ -108,8 +108,62 @@
    particulier en espace mémoire requis, si l'implémentation arrive à
    profiter pleinement des avantages théoriques de l'approche (ce qui
    est un objectif dur à atteindre avec les CAS Multipliers actuels).
-* Design idéal
-  TODO
+* Design idéal pour UIMA AS
+  Pour un design maximisant les possibilités de déploiement, les
+  workflows proposés sont assez différents de ceux envisagés dans
+  l'implémentation. La principale limitation du workflow proposé
+  réside dans le fait de devoir mettre en mémoire toutes les chaînes
+  lexicales du corpus pour les deux derniers workflows de la chaîne de
+  traitement.
+
+  Évidemment, si cette contrainte est conservée il ne sert à rien
+  d'avoir à côté un design idéal pour la parallèlisation car il sera
+  impossible de trouver des nodes capables de mener à bien les
+  traitements demandés (mettre en mémoire les chaînes lexicales sera
+  impossible pour un taille de corpus suffisante.
+
+  L'idée est donc de proposer un workflow pour règler ce problème. Le
+  workflow séparera le corpus de messages en un corpus de threads. Il
+  faudra aussi proposer un nouveau Collection Reader, qui lui sera en
+  charge de lire les threads un par un.
+
+  La partie concernant la construction du réseau de collocations est à
+  peine toucher : pour avoir le maximum de parallèlisation possible,
+  il convient de séparer le Collection Reader et son parsing du HTML
+  en un CR + un AE, comme discuté en cours. À noter aussi que si le
+  réseaude collocations devient trop gros pour être géré par les nodes
+  sur lesquelles on compte exécuter les traitements, il reste possible
+  d'en faire un service externe (et donc une base de données qui a des
+  capacités très supérieures à une simple mise en mémoire pour ce qui
+  est du stockage). Cela sera cependant au prix d'un peu de vitesse
+  d'exécution.
+
+  Après la construction du réseau de collocations, il faut donc
+  séparer le corpus en threads. Voici le workflow proposé :
+
+  #+ATTR_HTML: width="800px"
+  [[./img/cs.png]]
+
+  D'un point de vue technique, ce workflow est très réalisable, car
+  les mbox ne sont que des =cat= des différents messages, il suffit
+  donc de les découper et de les =cat= à nouveau dans des fichiers
+  dédiés à un thread particulier dont on obtient les informations par
+  le fichier digest.
+
+  Vient ensuite la détection de liens entre messages. Ce workflow est
+  grandement simplifié par le workflow précédent et est assez
+  « direct » d'un point de vue de la conception :
+
+  #+ATTR_HTML: width="800px"
+  [[./img/ld2.png]]
+
+  Ces 3 workflows considérés dans leur ensemble sont très
+  parallèlisables. Ils ne nécessitent pas de ressource énorme en
+  mémoire (à nouveau, si le réseau de collocations devient trop
+  important, il peut faire l'objet d'un service externe) ni
+  d'opérations délicates sous UIMA (comme le CAS merging). Ils sont
+  donc parfaitement adaptables à UIMA AS et on pourra tirer plein
+  parti des possibilités de configuration fine du framework.
 * Implémentation
 ** Ressources
 *** Réseau de collocations
@@ -189,18 +243,23 @@
     l'approche théorique mais dans le procédé d'implémentation mis en
     place, donc cet algorithme n'a pas fait l'objet d'un travail
     particulier). Il utilise la méthode =compare= fournie avec le
-    projet de départ (qui est un coefficient de Dice) :
+    projet de départ (qui est un coefficient de Dice) et paire de
+    manière gloutonne les chaînes lexicals des deux ensembles comparés
+    puis moyenne les scores de comparaisons des paires :
 
     #+BEGIN_SRC C
     Entrée : m1 et m2 deux ensembles de chaînes
              lexicales représentant deux messages
+    grand ← le plus grand de m1 et m2
+    petit ← le plus petit de m1 et m2
     score ← 0
-    Pour toute chaîne lexicale c1 dans m1 :
-        Pour toute chaîne lexicale c2 dans m2 :
+    Pour toute chaîne lexicale c1 dans petit :
+        Pour toute chaîne lexicale c2 dans grand :
             score ← score + coefficient de Dice de c1 et c2
         Fin pour
+        enlever c2 de grand
     Fin pour
-    Retourner score / |m1| / |m2|
+    Retourner score / |petit|
     #+END_SRC
 * Utilisation du logiciel
   Afin de rendre le développement du logiciel plus aisé sous Netbeans
@@ -220,29 +279,30 @@
   il faut ensuite appeler java de la manière suivante :
   
   #+BEGIN_SRC shell
-  java -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
-      linkInterMessageDetector.wf.CollocationNetworkBuilderWF
+  java \
+      -cp target/link-detection-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      fr.univnantes.atal.nlpdev.linkdetection.CollocationNetworkBuilderWF
   #+END_SRC
 
   Le workflow de création des chaînes lexicales nécessite quand à lui
   une augmentation de la mémoire disponible (1024m sont suffisants
-  chez moi mais ralentissent la fin de l'exécution−le nettoyage du tas
-  prenant visiblement beaucoup de temps−2048m comme présenté
-  ci-dessous sont donc plus confortables si la machine de test le
-  permet). L'appel est alors :
+  chez moi mais ralentissent l'exécution−le nettoyage du tas prenant
+  visiblement beaucoup de temps−2048m comme présenté ci-dessous sont
+  donc plus confortables si la machine de test le permet). L'appel est
+  alors :
 
   #+BEGIN_SRC shell
   java -Xmx2048m \
-      -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
-      linkInterMessageDetector.wf.LexicalChainsBuilderWF
+      -cp target/link-detection-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      fr.univnantes.atal.nlpdev.linkdetection.LexicalChainsBuilderWF
   #+END_SRC
 
   Pour le workflow de détection de liens l'appel est :
 
   #+BEGIN_SRC shell
   java -Xmx2048m \
-      -cp target/linkInterMessageDetector-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
-      linkInterMessageDetector.wf.LinksDetectionWF
+      -cp target/link-detection-0.0.1-SNAPSHOT-jar-with-dependencies.jar \
+      fr.univnantes.atal.nlpdev.linkdetection.LinksDetectionWF
   #+END_SRC
 
   Note : aucune récupération d'arguments n'a été implémentée pour
@@ -251,11 +311,230 @@
   une exécution avec des paramètres particuliers. En particulier, il
   convient de bien renseigner les chemins des ressources et outputs
   afin que le logiciel fonctionne correctement. Il faut repackager le
-  logiciel pour que les changements prennent effet.
+  logiciel pour que les changements prennent effet (=mvn package=).
 
   Il est aussi important d'exécuter ces 3 workflows dans l'odre
   proposé ci-dessous pour un premier run car les fichiers outputs ne
   sont pas fournis /a priori/ et chaque workflow dépend du précédent.
+
+  Pour modifier la verbosité de l'output du logiciel, il faut éditer
+  le fichier de configuration des loggers car tout l'output a été
+  transformé pour en utiliser. Ainsi les règlages se font dans le
+  fichier =src/main/resources/log4j.xml=.
 * Discussions
-** UIMA vs d'autres méthodes
-   Parmi les avantages de l'utilisation d'UIMA
+** Approche du problème
+   Je n'ai pas de points à apporter à la discussion sur cette
+   approche, je la trouve intéressante à implémenter et donc adaptée
+   au contexte (cours sur UIMA) mais je ne connais pas les autres
+   approches du domaine. Naturellement j'aurais penché vers une
+   solution purement technique (correctement nettoyer les messages
+   (encoding, citations de messages et signatures) afin de disposer
+   d'informations correctes sur qui cite qui pour aboutir à une
+   représentation en arbre des citations inter-messages
+   (potentiellement DAG plutôt qu'arbre pour gérer les messages qui
+   répondent à plusieurs messages), mais cela relève simplement de la
+   technique et pas trop de l'approche de recherche. Si l'on ne
+   dispose pas des citations des messages antérieurs alors cette
+   méthode est intéressante car utilise des concepts linguistiques
+   (chaînes lexicales, coefficient de Dice−qui si il n'est pas
+   purement linguistique est souvent utilisé en TAL, etc).
+** Contraintes imposées
+   Les contraintes imposées (/ie/ d'utiliser directement les fichiers
+   ZIM et mbox) obligent à explorer UIMA plus en profondeur que si des
+   pré-processing avaient été autorisés. L'exploration du framework
+   est nécessaire car ces contraintes permettent de souligner une des
+   plus grandes faiblesses de UIMA : il est *beaucoup* plus délicat de
+   proposer une chaîne de traitement UIMA quand les documents traités
+   ne sont pas indépendants, et les messages disparates ne le sont
+   pas. Il faut avoir recours à des ressources partagées ou à des
+   méthodes peu aisées à implémenter (CAS merging, etc), et ces bouées
+   de secours résistent fort mal à la parallèlisation, ce qui est
+   pourtant un des points forts des chaînes UIMAs « classiques ».
+
+   Ces contraintes permettent donc de mieux situer UIMA sur le spectre
+   des frameworks de TAL : c'est un framework puissant avec de
+   nombreux avantages (voir la discussion suivante), mais pour
+   certains problèmes, il faudra lutter contre le framework et cela
+   pourra se révéler contre-productif.
+** UIMA vs d'autres outils
+   Parmi les avantages de l'utilisation d'UIMA, j'ai noté
+   principalement :
+
+   - force la structuration du programme en modules et force à
+     correctement définir les interfaces et les types en jeu. Cela
+     résulte en un logiciel maintenable et facilement compréhensible
+     (car non monolithique et dont l'architecture est connue). C'est
+     clairement un avantage si l'on compare ces qualités aux qualités
+     d'un programme python de NLP standard où les modules sont souvent
+     mal définis et où le workflow est « propre » à chaque
+     développeur : le coup d'entrée sur la base de code est bien plus
+     important ;
+   - *permet la réutilisation de composants*, que cela soit des
+     composants personnels entre différents projets ou des composants
+     tierces. C'est une conséquence du premier point et de l'effort de
+     normalisation UIMA. Là encore des méthodes classiques de
+     développement TAL peinent à arriver à ce résultat. Les paramètres
+     sont souvent mal définis, les interfaces floues et la
+     réutilisation est donc mal-aisée ;
+   - tourne sur la JVM (énorme éco-système de très haute qualité) ;
+   - utilise les outils industriels de la JVM à son avantage, par
+     exemple avec DKPro qui partage ses composants par maven central
+     ou avec les systèmes avancés de logging. Cela permet de profiter
+     pleinement du tooling java qui est excellent ;
+   - projet apache et basé sur une grande communauté. Bénéficie ainsi
+     de beaucoup de contributions, d'une documentation de qualité,
+     etc.
+
+   Avant d'aborder les points négatifs, il me parait important de
+   remarquer que si avant UIMA était lourd à mettre en place, UIMAfit
+   a grandement changé la donne. UIMAfit est beaucoup moins couplé à
+   Eclipse que ne l'est UIMA et une chaîne de traitement est
+   maintenant l'affaire de quelques lignes de java. Surtout combiné à
+   Maven, UIMAfit permet de mettre en place un environnement de
+   travail et un squelette d'application en quelques minutes, parfois
+   pré-processing compris. Si l'on ajoute à UIMAfit et Maven un script
+   pour décrire des types en YAML au lieu du XML verbeux nécessaire
+   (comme celui dont dispose Dictanova−qui va peut-être être
+   open-sourcé mais qui n'est pas dur à recoder sinon), on obtient un
+   système simple à utiliser (pas de configuration XML si l'on n'a pas
+   besoin de déploiement compliqué) et qui concentre les forces de
+   UIMA en allègeant très fortement ses faiblesses de lourdeur.
+
+   Cela rend UIMA compétitif par rapport aux langages de script pour
+   de petites tâches de TAL. Ce n'est pas à proprement parler un point
+   positif (compétitif ne veut pas dire supérieur) mais ce n'est plus
+   un point négatif comme ça l'était dans le passé, d'où la remarque.
+
+   Pour les points négatifs, je relèverais :
+   - modèle de traitements basé sur le document et non la collection,
+     ce qui rend les traitements difficiles quand les documents ne
+     sont pas indépendants (cf discussion ci-dessus sur les
+     contraintes proposées) ;
+   - peu de souplesse au niveau de la manière de consommer la
+     collection à traiter. Des frameworks comme Hadoop sont beaucoup
+     plus puissants sur ce point en permettant de consommer la
+     collection de manière parallèle (et pas seulement de parallèliser
+     les traitements sur une consommation séquentielle). On peut de
+     plus se demander pourquoi cette contrainte existe alors que le
+     modèle de traitement par document est parfaitement compatible
+     avec le modèle de Hadoop ;
+   - framework AS non convaincant par rapport aux rivaux Hadoop,
+     Storm, etc. Il semble plus judicieux d'intégrer UIMA à ces
+     frameworks que d'utiliser UIMA AS dès lors qu'un workflow complet
+     est requis. En effet il est rare de devoir
+     parallèliser *seulement* des modules UIMA dans un traitement,
+     sans aucun élément extérieur. Or UIMA AS n'a pas l'air
+     particulièrement facile à interfacer avec d'autres framework plus
+     généraux qui permettraient, eux, de parallèliser des workflows
+     plus complets. Cela reste une option intéressante pour certains
+     déploiements ;
+   - souffre d'une image de complexité qui peut le rendre dur à
+     « vendre » à une équipe. Cette image est de plus en plus
+     surfaite étant donné la qualité de la documentation et des
+     nouveaux frameworks comme UIMAfit.
+
+   D'autres points intéressants à mentionner sont sûrement que UIMA
+   précède l'engouement récent pour la programmation fonctionnelle
+   dans le but de produire des systèmes “scalables” (comme en
+   témoignent les apparitions de Scala et Clojure sur le plateau de
+   jeu, ainsi que la redécouverte d'Erlang). En conséquence on
+   retrouve dans les patterns mis en place toute la difficulté de
+   gérer des systèmes concurrents dans le paradigme impératif.
+
+   Ou encore que le fait de tourner sur la JVM a certains désavantages
+   pour profiter de programmes non JVM (par exemple pour les intégrer
+   correctement au processus de build). Or en TAL trois « pipes »
+   d'outils GNU/Linux permettent de réaliser beaucoup de travail
+   (=iconv -f utf8 -t ascii//translit= n'a pas d'équivalent trivial
+   sur la JVM par exemple, même sans considérer les pipes qui
+   permettent de générer des « one time workflows » trivialement).
+** Évaluation
+   Avant de réfléchir sur les évaluations proposées, il est
+   intéressant de regarder de quoi est fait le corpus. Par exemple, on
+   peut calculer le nombre moyen de messages par thread en excluant
+   les threads à 1 message (car on ne liera rien dans ces
+   threads). Cela peut se faire facilement avec la commande suivante :
+   #+BEGIN_SRC shell
+   < data/thread-messageId.digest \
+       awk '/# messages/ {if ($3 != 1) {sum += $3; threads++}}
+            /# threads/ {print sum / threads; exit 0;}'
+   #+END_SRC
+   Cela nous apprend que la taille moyenne des threads qui nous
+   intéressent est 4.80671.
+
+   Nous pouvons ensuite calculer les valeurs de précision attendues si
+   l'on utilise un tirage aélatoire sur les messages disponibles :
+
+   - si l'on considère l'ordre, pour un thread de $m$ messages, on
+     fera $m - 1$ prédictions et la somme des probabilités qu'on ait
+     chaque prédiction juste est $\sum^{m - 1}_{r = 0}\frac{1}{2}^r$,
+     ce qui vaut $\frac{1 - \frac{1}{2}^m}{1 - \frac{1}{2}}$ ou encore
+     $2 - \left(\frac{1}{2}\right)^{m - 1}$. La commande suivante
+     permet de calculer et moyenner cette valeur pour tous les threads
+     de la collection :
+     #+BEGIN_SRC shell
+     < data/thread-messageId.digest \
+         awk '/# messages/ {if ($3 != 1) {print $3;}}
+              /# threads/  {exit;}' \
+         | sort | uniq -c \
+         | awk '    {count+=$1*($2-1); total+=$1*($2-1)/(2-(1/2)^($2-2));}
+                END {print total/count;}'
+     #+END_SRC
+     Cette commande retourne 0.572146, c'est donc la baseline la plus
+     basse possible si l'on tient compte de la date dans nos
+     traitements des messages.
+   - si l'on ne considère pas l'ordre, pour un thread de $m$ messages,
+     on fera $m$ prédictions et la somme des probabilités qu'on ait
+     chaque prédiction juste est $m\left(\frac{1}{m}\right)$
+     ($\frac{1}{m}$ et non $\frac{1}{m - 1}$ car on peut décider ou
+     non qu'un message a un parent et si il en a un on doit le choisir
+     parmi $m - 1$ messages possibles, résultant en $m$ possibilités
+     pour chaque message), ce qui vaut évidemment $1$. La commande
+     suivante permet de calculer et moyenner cette valeur pour tous
+     les threads de la collection :
+     #+BEGIN_SRC shell
+     < data/thread-messageId.digest \
+         awk '/# messages/ {if ($3 != 1) {print $3;}}
+              /# threads/  {exit;}' \
+         | sort | uniq -c \
+         | awk '    {count += $1 * $2; total += $1;}
+                END {print total / count;}'
+     #+END_SRC
+     Le résultat de la commande est 0.208042. C'est donc le score à
+     battre pour faire mieux que l'aléatoire si l'on ne considère pas
+     l'ordre dans les messages.
+
+   Tant que l'on tient compte de ces baselines, il est possible
+   d'utiliser la méthode d'évaluation fournie de manière
+   satisfaisante : il faudra simplement ajuster nos conclusions en
+   fonction de la méthode que l'on évalue (avec ou sans
+   ordre). L'autre possibilité est de créer une évaluation spécifique
+   au cas ordonné. Il faudrait alors pondérer l'importance de chaque
+   prédiction en fonction de sa facilité : on ne tiendrait pas compte
+   du premier et deuxième messages (100% de précision si l'on tient
+   compte de la date), et on pondèrerait les autres prédictions par
+   exemple en les pondèrant par leurs probabilités d'être justes : si
+   une prédiction a 1 chance sur 2 d'être juste, on la pondère par 2,
+   si elle a 1 chance sur 10 d'être juste, par 10, etc. Avec cette
+   pondération, chaque réponse entraîne statistiquement la même
+   augmentation ou chute de la précision malgré son impact naturel
+   différent.
+
+   Il faut aussi tenir compte du fait que le gold standard est ici
+   déterminé automatiquement. On ne prend donc pas en compte le fait
+   qu'un message peut citer le dernier message envoyé mais répondre à
+   un autre message (mauvais utilisation du client mail) ou simplement
+   répondre à plusieurs messages (mauvaise spécification du problème :
+   on ne cherche qu'un parent). On ne peut donc pas s'attendre à des
+   résultats parfaits, même avec un système parfait pour le problème
+   tel que posé.
+* Résultats
+  Les résultats obtenus sont sans considérer l'ordre et sont
+  similaires à la baseline aléatoire (0.1957/0.2328/0.2126 P/R/F
+  contre 0.2080/0.2080/0.2080 P/R/F). Le gain de F-mesure est
+  médiocre et cela s'explique facilement par la pauvre qualité des
+  pre-processing (nombreux problèmes d'encoding, GPG non géré, etc) et
+  de la méthode de comparaison d'ensembles de chaînes lexicales
+  choisie. Toujours parce qu'il avait été dit que l'intérêt du projet
+  ne résidait pas dans le choix de la méthode, je n'ai pas cherché à
+  l'améliorer outre mesure.
