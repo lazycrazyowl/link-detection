@@ -5,6 +5,7 @@ import fr.univnantes.atal.nlpdev.linkdetection.res.LexicalChainsModel;
 import fr.univnantes.atal.nlpdev.linkdetection.res.ThreadModel;
 import fr.univnantes.atal.nlpdev.linkdetection.types.Id;
 import fr.univnantes.atal.nlpdev.linkdetection.types.Link;
+import java.util.HashSet;
 import java.util.Set;
 import org.apache.uima.analysis_engine.AnalysisEngineProcessException;
 import org.apache.uima.fit.component.JCasAnnotator_ImplBase;
@@ -14,7 +15,7 @@ import org.apache.uima.jcas.JCas;
 
 /**
  * Analysis Engine that links the current message to its most probable parent.
- * 
+ *
  * Requires the lexical chains model and the thread info to be loaded.
  */
 public class LinkAE extends JCasAnnotator_ImplBase {
@@ -71,12 +72,28 @@ public class LinkAE extends JCasAnnotator_ImplBase {
             Set<LexicalChain> chains,
             Set<LexicalChain> otherChains) {
         double score = 0d;
-        for (LexicalChain chain1 : chains) {
-            for (LexicalChain chain2 : otherChains) {
-                Double comparison = chain1.compare(chain2);
-                score += comparison;
-            }
+        Set<LexicalChain> biggest, smallest;
+        if (chains.size() > otherChains.size()) {
+            biggest = chains;
+            smallest = otherChains;
+        } else {
+            biggest = otherChains;
+            smallest = chains;
         }
-        return score / (chains.size() * otherChains.size());
+        Set<LexicalChain> o = new HashSet<>(biggest);
+        for (LexicalChain chain1 : smallest) {
+            LexicalChain best = null;
+            double bestScore = Double.NEGATIVE_INFINITY;
+            for (LexicalChain chain2 : o) {
+                Double comparison = chain1.compare(chain2);
+                if (comparison > bestScore) {
+                    best = chain2;
+                    bestScore = comparison;
+                }
+            }
+            o.remove(best);
+            score += bestScore;
+        }
+        return score / smallest.size();
     }
 }
