@@ -54,9 +54,9 @@ public class LinksDetectionWF {
 
         CollectionReaderDescription crd = createReaderDescription(
                 MboxReaderCR.class,
-                MboxReaderCR.PARAM_MBOX_SRCPATH, "data/ubuntu-fr-utf8.mbox",
+                MboxReaderCR.PARAM_MBOX_SRCPATH, "data/ubuntu-fr.mbox",
                 MboxReaderCR.PARAM_LANGUAGE, "fr",
-                MboxReaderCR.PARAM_ENCODING, "utf-8");
+                MboxReaderCR.PARAM_ENCODING, "ISO-8859");
 
         AggregateBuilder builder = new AggregateBuilder();
         builder.add(parserAe);
