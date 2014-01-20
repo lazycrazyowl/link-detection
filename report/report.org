@@ -27,7 +27,7 @@
    sont détaillés tour à tour ci-dessous.
 ** Construction du réseau de collocations
    Le workflow proposé consiste en l'utilisation d'un Collection
-   Reader et deux deux AEs pour remplir une ressource représentant le
+   Reader et de deux AEs pour remplir une ressource représentant le
    réseau de collocations visé. Il est fidèle au diagramme fourni :
 
    #+ATTR_HTML: width="800px"
@@ -265,7 +265,8 @@
   Afin de rendre le développement du logiciel plus aisé sous Netbeans
   et autres IDEs différents d'Eclipse, le projet Eclipse a été
   transformé en projet Maven. Le résultat de cette transformation a
-  été mis à disposition du reste du groupe sur [[https://github.com/m09/teach-uima-project/releases/tag/v1.0][github]].
+  été mis à disposition du reste du groupe sur [[https://github.com/m09/teach-uima-project/releases/tag/v1.0][github]] (le code complet
+  de l'implémentation est aussi disponible sur ce dépôt).
 
   En conséquence, packager le logiciel en une jar est un simple appel
   maven :
